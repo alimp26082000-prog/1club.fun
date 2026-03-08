@@ -16,12 +16,12 @@
         .bal-amt { font-size: 36px; font-weight: bold; color: var(--accent); }
         .game-card { background: #1e254d; margin: 10px; border-radius: 20px; padding: 20px; border: 1px solid #3f478a; }
         .timer-sec { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 50px; margin-bottom: 20px; }
-        .bet-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .bet-btn { border: none; padding: 18px; border-radius: 12px; font-weight: 900; color: #fff; cursor: pointer; }
+        .bet-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .bet-btn { border: none; padding: 15px; border-radius: 10px; font-weight: 900; color: #fff; cursor: pointer; font-size: 14px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 5000; align-items: center; justify-content: center; }
         .modal-content { background: var(--primary); padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--accent); }
-        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: #0c0f26; color: #fff; text-align: center; }
-        .dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin: 4px; border: 1px solid rgba(255,255,255,0.2); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: #0c0f26; color: #fff; text-align: center; font-size: 16px; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin: 3px; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -30,33 +30,199 @@
     <div class="login-card">
         <h1 style="color:var(--accent);">1CLUB PRO</h1>
         <p>Login with Mobile Number</p>
-        <input type="number" id="loginPhone" placeholder="Mobile Number">
-        <button onclick="doLogin()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:bold; color:#000;">START GAME</button>
+        <input type="number" id="loginPhone" placeholder="9527350351">
+        <button onclick="doLogin()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:bold; color:#000; cursor:pointer;">START GAME</button>
     </div>
 </div>
 
 <div id="gameUI" style="display:none;">
     <div class="top-nav">
         <div style="font-weight:900; font-size:20px;">1CLUB <span style="color:var(--accent);">PRO</span></div>
-        <div id="uID" style="font-size:12px; opacity:0.7;">ID: ...</div>
+        <div id="uID" style="font-size:12px; opacity:0.8;">ID: ...</div>
     </div>
 
     <div class="wallet-card">
-        <div style="font-size:14px; opacity:0.8;">Total Balance</div>
+        <div style="font-size:14px; opacity:0.8;">Available Balance</div>
         <div class="bal-amt">₹<span id="uBal">0.00</span></div>
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button onclick="openM('depM')" style="flex:1; padding:12px; background:var(--green); border:none; border-radius:10px; color:white; font-weight:bold;">DEPOSIT</button>
             <button onclick="openM('witM')" style="flex:1; padding:12px; background:var(--red); border:none; border-radius:10px; color:white; font-weight:bold;">WITHDRAW</button>
         </div>
-        <div onclick="openAdminCheck()" style="text-align:center; font-size:10px; margin-top:10px; opacity:0.2;">ADMIN PANEL</div>
+        <div onclick="openAdminCheck()" style="text-align:center; font-size:10px; margin-top:12px; opacity:0.3; cursor:pointer;">ADMIN PANEL</div>
     </div>
 
     <div class="game-card">
         <div class="timer-sec">
             <div><small>Period</small><br><b id="period">...</b></div>
-            <div style="text-align:right;"><small>Count Down</small><br><b id="timer" style="color:var(--accent); font-size:24px;">00:60</b></div>
+            <div style="text-align:right;"><small>Time Left</small><br><b id="timer" style="color:var(--accent); font-size:22px;">00:00</b></div>
         </div>
         <div class="bet-grid">
             <button class="bet-btn" style="background:var(--green)" onclick="placeBet('Green')">GREEN</button>
             <button class="bet-btn" style="background:var(--violet)" onclick="placeBet('Violet')">VIOLET</button>
-            <button class="bet-btn" style="background:var(--red)" onclick="placeBet('Red')">RED</
+            <button class="bet-btn" style="background:var(--red)" onclick="placeBet('Red')">RED</button>
+        </div>
+    </div>
+
+    <div style="padding:0 15px;"><button onclick="copyInvite()" style="background:none; border:1px dashed var(--accent); color:var(--accent); padding:12px; border-radius:12px; width:100%; font-size:12px;">🎁 SHARE & EARN COMMISSION</button></div>
+
+    <div class="game-card">
+        <div style="font-weight:bold; border-bottom:1px solid #3f478a; padding-bottom:10px; margin-bottom:10px; font-size:14px;">TREND HISTORY</div>
+        <div id="hGrid"></div>
+    </div>
+</div>
+
+<div id="depM" class="modal"><div class="modal-content">
+    <h3>Deposit</h3>
+    <div id="qrBox" style="display:none; margin-bottom:15px;"><img id="qrImg" src="" style="width:160px; border:4px solid #fff; border-radius:10px;"></div>
+    <input type="number" id="da" placeholder="Enter Amount" oninput="showQR()">
+    <p style="font-size:11px; color:var(--accent);">UPI: poonamlondhe52-1@okhdfcbank</p>
+    <input type="text" id="du" placeholder="12 Digit UTR Number">
+    <button onclick="sendD()" style="width:100%; padding:15px; background:var(--green); border:none; border-radius:10px; color:white; font-weight:bold;">SUBMIT</button>
+    <button onclick="closeM('depM')" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancel</button>
+</div></div>
+
+<div id="adminPanel" class="modal" style="background:#0c0f26;"><div class="modal-content" style="width:95%; height:90%; overflow-y:auto; border:2px solid var(--accent);">
+    <button onclick="closeM('adminPanel')" style="float:right; background:red; color:white; border:none; padding:8px 15px; border-radius:5px;">X</button>
+    <h2 style="color:var(--accent);">ADMIN DASHBOARD</h2>
+    <div id="pendingData" style="text-align:left; color:#000;"></div>
+</div></div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
+      authDomain: "my-colour-game-670af.firebaseapp.com",
+      databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com",
+      projectId: "my-colour-game-670af",
+      storageBucket: "my-colour-game-670af.firebasestorage.app",
+      messagingSenderId: "1098639199054",
+      appId: "1:1098639199054:web:b34a5aa3120ec0dbc5ac1f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let uid = localStorage.getItem('ouid');
+    let myBal = 0, currentBet = null;
+
+    if(uid) { 
+        document.getElementById('loginScreen').style.display = 'none'; 
+        document.getElementById('gameUI').style.display = 'block'; 
+        initGame(); 
+    }
+
+    function doLogin() {
+        let phone = document.getElementById('loginPhone').value;
+        if(phone.length >= 10) {
+            uid = "ID" + phone.slice(-4); 
+            localStorage.setItem('ouid', uid);
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            db.ref('users/' + uid).once('value', s => { 
+                if(!s.val()) db.ref('users/' + uid).set({ balance: 0, phone: phone }); 
+            });
+            initGame();
+        } else { alert("Please enter a valid 10-digit number"); }
+    }
+
+    function initGame() {
+        db.ref('users/' + uid).on('value', s => {
+            myBal = s.val() ? s.val().balance : 0;
+            document.getElementById('uBal').innerText = myBal.toFixed(2);
+            document.getElementById('uID').innerText = "ID: " + uid;
+        });
+        setInterval(() => {
+            let now = new Date();
+            let sec = 60 - now.getSeconds();
+            document.getElementById('timer').innerText = "00:" + (sec < 10 ? "0"+sec : sec);
+            document.getElementById('period').innerText = Math.floor(now.getTime()/1000);
+            if(sec === 1) processResult();
+        }, 1000);
+        loadHistory();
+    }
+
+    function placeBet(color) {
+        let amt = prompt("Bet on " + color + " (Min 10):", "10");
+        if(amt && myBal >= amt && amt >= 10) {
+            db.ref('users/'+uid).update({ balance: myBal - parseFloat(amt) });
+            currentBet = { color: color, amount: parseFloat(amt) };
+            db.ref('active_bets').push({ color: color, amount: parseFloat(amt) });
+            alert("Bet Placed!");
+        } else if(amt) { alert("Insufficient Balance or Invalid Amount!"); }
+    }
+
+    function processResult() {
+        db.ref('active_bets').once('value', (snap) => {
+            let pools = { Green: 0, Red: 0, Violet: 0 };
+            snap.forEach(b => { pools[b.val().color] += b.val().amount; });
+            let winColor = Object.keys(pools).reduce((a, b) => pools[a] < pools[b] ? a : b);
+            let hex = { Green: '#00c853', Red: '#ff1744', Violet: '#aa00ff' }[winColor];
+            db.ref('history').push(hex);
+            if(currentBet) {
+                if(currentBet.color === winColor) {
+                    db.ref('users/'+uid).update({ balance: myBal + (currentBet.amount * 1.9) });
+                    alert("Round Over: You Won!");
+                }
+                currentBet = null;
+            }
+            db.ref('active_bets').remove();
+        });
+    }
+
+    function showQR() {
+        let a = document.getElementById('da').value;
+        if(a >= 10) {
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26pn=1CLUB_PRO%26am=${a}%26cu=INR`;
+            document.getElementById('qrBox').style.display = 'block';
+        }
+    }
+
+    function sendD() {
+        let a = document.getElementById('da').value;
+        let u = document.getElementById('du').value;
+        if(a >= 10 && u.length >= 10) {
+            db.ref('pending_deposits').push({ uid: uid, amt: a, utr: u });
+            alert("Payment Submitted! Admin will verify.");
+            closeM('depM');
+        } else { alert("Enter Amount and 12-digit UTR!"); }
+    }
+
+    function openM(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeM(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openAdminCheck() { 
+        if(prompt("Enter Admin Pass:") === "77759636477") { 
+            openM('adminPanel'); 
+            loadAdmin(); 
+        } 
+    }
+
+    function loadAdmin() {
+        db.ref('pending_deposits').on('value', s => {
+            let h = "<table border='1' width='100%' style='background:#fff; font-size:12px; border-collapse:collapse;'>";
+            h += "<tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr>";
+            s.forEach(d => {
+                h += `<tr><td>${d.val().uid}</td><td>${d.val().amt}</td><td>${d.val().utr}</td><td><button onclick="appD('${d.key}','${d.val().uid}',${d.val().amt})">Approve</button></td></tr>`;
+            });
+            document.getElementById('pendingData').innerHTML = h + "</table>";
+        });
+    }
+
+    function appD(k, u, a) {
+        db.ref('users/'+u+'/balance').transaction(c => (c || 0) + parseFloat(a));
+        db.ref('pending_deposits/'+k).remove();
+        alert("Approved!");
+    }
+
+    function loadHistory() {
+        db.ref('history').limitToLast(24).on('value', s => {
+            let g = document.getElementById('hGrid'); g.innerHTML = "";
+            s.forEach(d => { g.innerHTML += `<div class="dot" style="background:${d.val()}"></div>`; });
+        });
+    }
+
+    function copyInvite() {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Referral Link Copied!");
+    }
+</script>
+</body>
+</html>
