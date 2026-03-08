@@ -202,27 +202,59 @@
         } else { document.getElementById(id).style.display = 'flex'; }
     }
 
-    // Admin & Utils
-    function openAdminCheck() { if(prompt("Pass:") === "77759636477") document.getElementById('adminPanel').style.display = 'flex'; }
-    function showQR() {
-        let a = document.getElementById('da').value;
-        if(a > 0) {
-            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${myUPI}%26pn=1CLUB_PRO%26am=${a}%26cu=INR`;
-            document.getElementById('qrBox').style.display = 'block';
-        }
-    }
-    function copyInvite() {
-        let link = window.location.href.split('?')[0] + "?ref=" + uid;
-        navigator.clipboard.writeText(link);
-        alert("Invite Copied: " + link);
-    }
-    db.ref('history').limitToLast(20).on('value', s => {
-        let g = document.getElementById('hGrid'); g.innerHTML = "";
-        s.forEach(d => { g.innerHTML += `<div class="dot" style="background:${d.val()}"></div>`; });
+    // --- ADMIN PANEL REFRESH LOGIC ---
+function openAdminCheck() {
+    let p = prompt("Pass:");
+    if(p === "77759636477") { // Aapka master password
+        document.getElementById('adminPanel').style.display = 'flex';
+        loadAdminData();
+    } else { alert("Wrong Password!"); }
+}
+
+function loadAdminData() {
+    const container = document.getElementById('pendingData');
+    container.innerHTML = "<p>Loading Data...</p>";
+
+    // Deposits Fetch Karein
+    db.ref('pending_deposits').on('value', (snap) => {
+        let html = "<h4>Pending Deposits</h4><table border='1' style='width:100%; font-size:12px;'><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr>";
+        snap.forEach(d => {
+            let data = d.val();
+            html += `<tr>
+                <td>${data.uid}</td>
+                <td>${data.amt}</td>
+                <td>${data.utr}</td>
+                <td><button onclick="approveDep('${d.key}', '${data.uid}', ${data.amt})" style="background:green; color:white;">Approve</button></td>
+            </tr>`;
+        });
+        html += "</table>";
+        
+        // Withdrawals Fetch Karein
+        db.ref('pending_withdrawals').on('value', (s) => {
+            html += "<h4>Pending Withdrawals</h4><table border='1' style='width:100%; font-size:12px;'><tr><th>ID</th><th>Amt</th><th>UPI</th><th>Action</th></tr>";
+            s.forEach(w => {
+                let wd = w.val();
+                html += `<tr>
+                    <td>${wd.uid}</td>
+                    <td>${wd.amt}</td>
+                    <td>${wd.upi}</td>
+                    <td><button onclick="db.ref('pending_withdrawals/${w.key}').remove()" style="background:red; color:white;">Clear</button></td>
+                </tr>`;
+            });
+            html += "</table>";
+            container.innerHTML = html;
+        });
     });
-    function closeM(id) { document.getElementById(id).style.display = 'none'; }
-    function closePop(id) { document.getElementById(id).style.display = 'none'; }
-    function sendD() { db.ref('pending_deposits').push({ uid: uid, amt: document.getElementById('da').value, utr: document.getElementById('du').value }); closeM('depM'); alert("Submitted!"); }
+}
+
+// Balance Update Function
+function approveDep(key, user, amount) {
+    db.ref('users/' + user + '/balance').transaction(current => (current || 0) + parseFloat(amount));
+    db.ref('pending_deposits/' + key).remove();
+    alert("Approved!");
+    }
+    
 </script>
 </body>
 </html>
+
