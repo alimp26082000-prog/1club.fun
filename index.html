@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1CLUB PRO</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :root { --accent: #6200ea; --bg: #0a0a0c; --card: #16161e; --text: #fff; --success: #00e676; --gold: #ffc107; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        .header { padding: 20px; background: var(--card); display: flex; justify-content: space-between; }
+        .wallet-box { background: linear-gradient(135deg, #2a1b5e, #1a1040); margin: 15px; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #444; }
+        .bal-val { font-size: 35px; color: var(--gold); }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px; }
+        .btn { border: none; padding: 15px 0; border-radius: 12px; font-weight: bold; color: #fff; }
+        #adminPanel { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; padding: 20px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #333; font-size: 12px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; padding: 20px; }
+        .modal-content { background: var(--card); border-radius: 20px; padding: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; }
+        .action-btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header"><b>1CLUB PRO</b><div id="displayID">ID: ...</div></div>
+<div class="wallet-box" onclick="triggerAdmin()">
+    <div style="font-size:12px;">BALANCE</div>
+    <div class="bal-val">₹<span id="uBal">0.00</span></div>
+</div>
+
+<div class="grid-3">
+    <button onclick="openM('depM')" class="btn" style="background:green;">DEPOSIT</button>
+    <button onclick="openM('witM')" class="btn" style="background:purple;">WITHDRAW</button>
+</div>
+
+<div id="adminPanel">
+    <button onclick="closeAdmin()" style="background:red; color:white; float:right;">X</button>
+    <h2>Admin Control</h2>
+    <p>Deposits:</p>
+    <table id="dTable"><thead><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr></thead><tbody></tbody></table>
+    <p>Withdrawals:</p>
+    <table id="wTable"><thead><tr><th>ID</th><th>Amt</th><th>UPI</th><th>Action</th></tr></thead><tbody></tbody></table>
+</div>
+
+<div id="depM" class="modal"><div class="modal-content">
+    <h3>Deposit</h3>
+    <p>UPI: poonamlondhe52-1@okhdfcbank</p>
+    <input type="number" id="da" placeholder="Amount">
+    <input type="text" id="du" placeholder="UTR Number">
+    <button class="action-btn" onclick="sendD()">SUBMIT</button>
+    <button onclick="closeM('depM')" style="color:red; background:none; border:none; width:100%; margin-top:10px;">Cancel</button>
+</div></div>
+
+<div id="witM" class="modal"><div class="modal-content">
+    <h3>Withdraw</h3>
+    <input type="number" id="wa" placeholder="Amount">
+    <input type="text" id="wu" placeholder="UPI ID">
+    <button class="action-btn" onclick="sendW()">REQUEST</button>
+    <button onclick="closeM('witM')" style="color:red; background:none; border:none; width:100%; margin-top:10px;">Cancel</button>
+</div></div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
+      authDomain: "my-colour-game-670af.firebaseapp.com",
+      databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com",
+      projectId: "my-colour-game-670af",
+      storageBucket: "my-colour-game-670af.firebasestorage.app",
+      messagingSenderId: "1098639199054",
+      appId: "1:1098639199054:web:b34a5aa3120ec0dbc5ac1f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let uid = localStorage.getItem('ouid') || "ID" + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('ouid', uid);
+    let myBal = 0;
+
+    db.ref('users/' + uid).on('value', (snap) => {
+        myBal = snap.val() ? snap.val().balance : 0;
+        document.getElementById('uBal').innerText = myBal.toFixed(2);
+        document.getElementById('displayID').innerText = "ID: " + uid;
+    });
+
+    function sendD() {
+        let amt = document.getElementById('da').value;
+        let utr = document.getElementById('du').value;
+        if(amt && utr) {
+            db.ref('pending_deposits').push({ uid: uid, amt: amt, utr: utr });
+            alert("Submitted!"); closeM('depM');
+        }
+    }
+
+    function sendW() {
+        let amt = parseFloat(document.getElementById('wa').value);
+        let upi = document.getElementById('wu').value;
+        if(myBal >= amt && amt >= 200) {
+            db.ref('users/' + uid).update({ balance: myBal - amt });
+            db.ref('pending_withdrawals').push({ uid: uid, amt: amt, upi: upi });
+            alert("Requested!"); closeM('witM');
+        }
+    }
+
+    db.ref('pending_deposits').on('value', (snap) => {
+        const table = document.querySelector('#dTable tbody');
+        table.innerHTML = "";
+        snap.forEach((child) => {
+            let d = child.val();
+            table.innerHTML += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.utr}</td><td><button onclick="approveD('${child.key}', '${d.uid}', ${d.amt})">Approve</button></td></tr>`;
+        });
+    });
+
+    db.ref('pending_withdrawals').on('value', (snap) => {
+        const table = document.querySelector('#wTable tbody');
+        table.innerHTML = "";
+        snap.forEach((child) => {
+            let w = child.val();
+            table.innerHTML += `<tr><td>${w.uid}</td><td>${w.amt}</td><td>${w.upi}</td><td><button onclick="doneW('${child.key}')">Paid</button></td></tr>`;
+        });
+    });
+
+    function approveD(key, user_id, amount) {
+        db.ref('users/' + user_id).once('value', (s) => {
+            let current = s.val() ? s.val().balance : 0;
+            db.ref('users/' + user_id).update({ balance: current + parseFloat(amount) });
+            db.ref('pending_deposits/' + key).remove();
+        });
+    }
+
+    function doneW(key) { db.ref('pending_withdrawals/' + key).remove(); }
+    function triggerAdmin() { 
+        let p = prompt("Password:"); 
+        if(p === "77759636477") document.getElementById('adminPanel').style.display = 'block'; 
+    }
+    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+    function openM(id) { document.getElementById(id).style.display = 'block'; }
+    function closeM(id) { document.getElementById(id).style.display = 'none'; }
+</script>
+</body>
+</html>
