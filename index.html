@@ -3,63 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1CLUB PRO</title>
+    <title>1CLUB PRO - Official</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
-        :root { --accent: #6200ea; --bg: #0a0a0c; --card: #16161e; --text: #fff; --success: #00e676; --gold: #ffc107; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--text); }
-        .header { padding: 20px; background: var(--card); display: flex; justify-content: space-between; }
-        .wallet-box { background: linear-gradient(135deg, #2a1b5e, #1a1040); margin: 15px; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #444; }
-        .bal-val { font-size: 35px; color: var(--gold); }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px; }
-        .btn { border: none; padding: 15px 0; border-radius: 12px; font-weight: bold; color: #fff; }
-        #adminPanel { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; padding: 20px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border: 1px solid #333; font-size: 12px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; padding: 20px; }
-        .modal-content { background: var(--card); border-radius: 20px; padding: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; }
-        .action-btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: bold; }
+        :root { --primary: #2b3270; --secondary: #1e254d; --accent: #ffc107; --text: #ffffff; --green: #00c853; --red: #ff1744; --violet: #aa00ff; }
+        body { font-family: 'Roboto', sans-serif; background: #0c0f26; margin: 0; color: var(--text); overflow-x: hidden; user-select: none; }
+        
+        /* 91 Club Premium Header */
+        .top-nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .wallet-card { background: linear-gradient(180deg, #3f478a, #2b3270); margin: 15px; padding: 20px; border-radius: 15px; border: 1px solid #4a54a4; }
+        .balance-amt { font-size: 32px; font-weight: bold; margin: 10px 0; color: var(--accent); }
+        
+        /* Game Dashboard & Timer */
+        .game-sec { background: var(--secondary); margin: 10px; border-radius: 15px; padding: 15px; }
+        .timer-row { display: flex; justify-content: space-between; align-items: center; }
+        .time-box { background: #0c0f26; padding: 10px 20px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); font-size: 24px; font-weight: 900; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .g-btn { border: none; padding: 18px; border-radius: 10px; font-weight: bold; color: white; cursor: pointer; font-size: 16px; }
+        
+        /* Popups */
+        .popup { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
+        .pop-card { background: var(--primary); padding: 30px; border-radius: 20px; text-align: center; width: 80%; border: 2px solid var(--accent); }
+        
+        #qrImg { border: 5px solid white; border-radius: 10px; width: 180px; margin: 10px 0; }
+        .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; margin: 3px; }
     </style>
 </head>
 <body>
 
-<div class="header"><b>1CLUB PRO</b><div id="displayID">ID: ...</div></div>
-<div class="wallet-box" onclick="triggerAdmin()">
-    <div style="font-size:12px;">BALANCE</div>
-    <div class="bal-val">₹<span id="uBal">0.00</span></div>
+<div class="top-nav">
+    <div style="font-weight:900;">1CLUB PRO</div>
+    <div id="uID" style="font-size:12px; color:var(--accent);">ID: ...</div>
 </div>
 
-<div class="grid-3">
-    <button onclick="openM('depM')" class="btn" style="background:green;">DEPOSIT</button>
-    <button onclick="openM('witM')" class="btn" style="background:purple;">WITHDRAW</button>
+<div class="wallet-card" onclick="openAdminCheck()">
+    <div style="font-size:14px; opacity:0.8;">Available Balance</div>
+    <div class="balance-amt">₹<span id="uBal">0.00</span></div>
+    <div style="display:flex; gap:10px;">
+        <button onclick="openM('depM')" style="flex:1; padding:12px; border:none; background:var(--green); color:white; border-radius:8px; font-weight:bold;">DEPOSIT</button>
+        <button onclick="openM('witM')" style="flex:1; padding:12px; border:none; background:var(--red); color:white; border-radius:8px; font-weight:bold;">WITHDRAW</button>
+    </div>
 </div>
 
-<div id="adminPanel">
-    <button onclick="closeAdmin()" style="background:red; color:white; float:right;">X</button>
-    <h2>Admin Control</h2>
-    <p>Deposits:</p>
-    <table id="dTable"><thead><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr></thead><tbody></tbody></table>
-    <p>Withdrawals:</p>
-    <table id="wTable"><thead><tr><th>ID</th><th>Amt</th><th>UPI</th><th>Action</th></tr></thead><tbody></tbody></table>
+<div class="game-sec">
+    <div class="timer-row">
+        <div><small>Period ID</small><br><b id="period">Loading...</b></div>
+        <div class="time-box" id="timer">00:60</div>
+    </div>
+    <div class="btn-grid">
+        <button class="g-btn" style="background:var(--green)" onclick="bet('Green')">Green</button>
+        <button class="g-btn" style="background:var(--violet)" onclick="bet('Violet')">Violet</button>
+        <button class="g-btn" style="background:var(--red)" onclick="bet('Red')">Red</button>
+    </div>
 </div>
 
-<div id="depM" class="modal"><div class="modal-content">
+<div style="text-align:center; padding:15px;">
+    <button onclick="copyInvite()" style="background:none; border:1px dashed var(--accent); color:var(--accent); padding:10px 20px; border-radius:10px; width:100%;">INVITE FRIENDS & EARN</button>
+</div>
+
+<div class="game-sec">
+    <div style="font-weight:bold; color:var(--accent); margin-bottom:10px;">Recent Trend</div>
+    <div id="hGrid"></div>
+</div>
+
+<div id="depM" class="popup"><div class="pop-card">
     <h3>Deposit</h3>
-    <p>UPI: poonamlondhe52-1@okhdfcbank</p>
-    <input type="number" id="da" placeholder="Amount">
-    <input type="text" id="du" placeholder="UTR Number">
-    <button class="action-btn" onclick="sendD()">SUBMIT</button>
-    <button onclick="closeM('depM')" style="color:red; background:none; border:none; width:100%; margin-top:10px;">Cancel</button>
+    <div id="qrBox" style="display:none;"><img id="qrImg" src=""></div>
+    <input type="number" id="da" placeholder="Enter Amount" oninput="showQR()" style="width:90%; padding:10px; margin:10px 0;">
+    <p style="font-size:10px;">UPI: poonamlondhe52-1@okhdfcbank</p>
+    <input type="text" id="du" placeholder="UTR Number" style="width:90%; padding:10px; margin:10px 0;">
+    <button onclick="sendD()" class="g-btn" style="background:var(--green); width:100%;">SUBMIT</button>
+    <button onclick="closeM('depM')" style="background:none; border:none; color:white; margin-top:10px;">Cancel</button>
 </div></div>
 
-<div id="witM" class="modal"><div class="modal-content">
-    <h3>Withdraw</h3>
-    <input type="number" id="wa" placeholder="Amount">
-    <input type="text" id="wu" placeholder="UPI ID">
-    <button class="action-btn" onclick="sendW()">REQUEST</button>
-    <button onclick="closeM('witM')" style="color:red; background:none; border:none; width:100%; margin-top:10px;">Cancel</button>
+<div id="winPop" class="popup"><div class="pop-card">
+    <h1 style="color:var(--green);">WIN! 🎉</h1>
+    <p>Your prediction was correct!</p>
+    <button onclick="closePop('winPop')" class="g-btn" style="background:var(--green); width:100%;">OK</button>
+</div></div>
+
+<div id="lossPop" class="popup"><div class="pop-card">
+    <h1 style="color:var(--red);">LOSS 😢</h1>
+    <p>Better luck in the next round!</p>
+    <button onclick="closePop('lossPop')" class="g-btn" style="background:var(--red); width:100%;">OK</button>
 </div></div>
 
 <script>
@@ -74,70 +102,81 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const myUPI = "poonamlondhe52-1@okhdfcbank";
 
-    let uid = localStorage.getItem('ouid') || "ID" + Math.floor(1000 + Math.random() * 9000);
+    let uid = localStorage.getItem('ouid') || "U" + Math.floor(1000 + Math.random() * 8999);
     localStorage.setItem('ouid', uid);
-    let myBal = 0;
+    let myBal = 0, currentBet = null;
 
-    db.ref('users/' + uid).on('value', (snap) => {
-        myBal = snap.val() ? snap.val().balance : 0;
+    db.ref('users/' + uid).on('value', (s) => {
+        myBal = s.val() ? s.val().balance : 0;
         document.getElementById('uBal').innerText = myBal.toFixed(2);
-        document.getElementById('displayID').innerText = "ID: " + uid;
+        document.getElementById('uID').innerText = "ID: " + uid;
     });
 
-    function sendD() {
-        let amt = document.getElementById('da').value;
-        let utr = document.getElementById('du').value;
-        if(amt && utr) {
-            db.ref('pending_deposits').push({ uid: uid, amt: amt, utr: utr });
-            alert("Submitted!"); closeM('depM');
+    // 60s Timer & Logic
+    setInterval(() => {
+        let sec = 60 - new Date().getSeconds();
+        document.getElementById('timer').innerText = "00:" + (sec < 10 ? "0"+sec : sec);
+        document.getElementById('period').innerText = new Date().getTime().toString().slice(0,10);
+        if(sec === 1) calculateResult();
+    }, 1000);
+
+    function bet(c) {
+        let amt = prompt("Bet on " + c + ":", "10");
+        if(amt && myBal >= amt) {
+            db.ref('users/'+uid).update({ balance: myBal - amt });
+            currentBet = { color: c, amount: amt };
+            db.ref('active_bets').push({ color: c, amount: parseFloat(amt) });
+            alert("Bet Success!");
         }
     }
 
-    function sendW() {
-        let amt = parseFloat(document.getElementById('wa').value);
-        let upi = document.getElementById('wu').value;
-        if(myBal >= amt && amt >= 200) {
-            db.ref('users/' + uid).update({ balance: myBal - amt });
-            db.ref('pending_withdrawals').push({ uid: uid, amt: amt, upi: upi });
-            alert("Requested!"); closeM('witM');
+    function calculateResult() {
+        db.ref('active_bets').once('value', (snap) => {
+            let p = { Green: 0, Red: 0, Violet: 0 };
+            snap.forEach(b => { p[b.val().color] += b.val().amount; });
+            
+            // Winning Logic: Choose color with lowest money
+            let winColor = Object.keys(p).reduce((a, b) => p[a] < p[b] ? a : b);
+            let hex = { Green: '#00c853', Red: '#ff1744', Violet: '#aa00ff' }[winColor];
+            db.ref('history').push(hex);
+            
+            if(currentBet) {
+                if(currentBet.color === winColor) {
+                    db.ref('users/'+uid).update({ balance: myBal + (currentBet.amount * 1.9) });
+                    document.getElementById('winPop').style.display = 'flex';
+                } else { document.getElementById('lossPop').style.display = 'flex'; }
+                currentBet = null;
+            }
+            db.ref('active_bets').remove();
+        });
+    }
+
+    function showQR() {
+        let a = document.getElementById('da').value;
+        if(a > 0) {
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${myUPI}%26pn=1CLUB_PRO%26am=${a}%26cu=INR`;
+            document.getElementById('qrBox').style.display = 'block';
         }
     }
 
-    db.ref('pending_deposits').on('value', (snap) => {
-        const table = document.querySelector('#dTable tbody');
-        table.innerHTML = "";
-        snap.forEach((child) => {
-            let d = child.val();
-            table.innerHTML += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.utr}</td><td><button onclick="approveD('${child.key}', '${d.uid}', ${d.amt})">Approve</button></td></tr>`;
-        });
-    });
-
-    db.ref('pending_withdrawals').on('value', (snap) => {
-        const table = document.querySelector('#wTable tbody');
-        table.innerHTML = "";
-        snap.forEach((child) => {
-            let w = child.val();
-            table.innerHTML += `<tr><td>${w.uid}</td><td>${w.amt}</td><td>${w.upi}</td><td><button onclick="doneW('${child.key}')">Paid</button></td></tr>`;
-        });
-    });
-
-    function approveD(key, user_id, amount) {
-        db.ref('users/' + user_id).once('value', (s) => {
-            let current = s.val() ? s.val().balance : 0;
-            db.ref('users/' + user_id).update({ balance: current + parseFloat(amount) });
-            db.ref('pending_deposits/' + key).remove();
-        });
+    function copyInvite() {
+        let link = window.location.href.split('?')[0] + "?ref=" + uid;
+        navigator.clipboard.writeText(link);
+        alert("Referral Link Copied: " + link);
     }
 
-    function doneW(key) { db.ref('pending_withdrawals/' + key).remove(); }
-    function triggerAdmin() { 
-        let p = prompt("Password:"); 
-        if(p === "77759636477") document.getElementById('adminPanel').style.display = 'block'; 
-    }
-    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
-    function openM(id) { document.getElementById(id).style.display = 'block'; }
+    db.ref('history').limitToLast(20).on('value', (snap) => {
+        let g = document.getElementById('hGrid'); g.innerHTML = "";
+        snap.forEach(d => { g.innerHTML += `<div class="dot" style="background:${d.val()}"></div>`; });
+    });
+
+    function openAdminCheck() { if(prompt("Pass:") === "77759636477") window.location.href += "?admin=true"; }
+    function sendD() { db.ref('pending_deposits').push({ uid: uid, amt: document.getElementById('da').value, utr: document.getElementById('du').value }); closeM('depM'); }
+    function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
+    function closePop(id) { document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
