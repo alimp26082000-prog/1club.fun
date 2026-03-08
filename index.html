@@ -12,7 +12,7 @@
         #loginScreen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: var(--primary); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--accent); }
         .top-nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid #3f478a; }
-        .wallet-card { background: linear-gradient(135deg, #3f478a, #2b3270); margin: 15px; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .wallet-card { background: linear-gradient(135deg, #3f478a, #2b3270); margin: 15px; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
         .bal-amt { font-size: 36px; font-weight: bold; color: var(--accent); }
         .game-card { background: #1e254d; margin: 10px; border-radius: 20px; padding: 20px; border: 1px solid #3f478a; }
         .timer-sec { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 50px; margin-bottom: 20px; }
@@ -21,9 +21,11 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 5000; align-items: center; justify-content: center; }
         .modal-content { background: var(--primary); padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--accent); }
         input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: #0c0f26; color: #fff; text-align: center; }
-        table { width: 100%; border-collapse: collapse; background: #fff; color: #000; font-size: 12px; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; background: #fff; color: #000; font-size: 11px; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
         .dot { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin: 3px; border: 1px solid rgba(255,255,255,0.2); }
+        /* Win/Loss Result Style */
+        #resultPopup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: #fff; color: #000; padding: 30px; border-radius: 20px; text-align: center; width: 250px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -32,7 +34,7 @@
     <div class="login-card">
         <h1 style="color:var(--accent);">1CLUB PRO</h1>
         <p>Login with Mobile Number</p>
-        <input type="number" id="loginPhone" placeholder="9527350351">
+        <input type="number" id="loginPhone" placeholder="Enter Mobile Number">
         <button onclick="doLogin()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:bold; color:#000;">START GAME</button>
     </div>
 </div>
@@ -44,13 +46,13 @@
     </div>
 
     <div class="wallet-card">
-        <div style="font-size:14px; opacity:0.8;">Balance</div>
+        <div style="font-size:14px; opacity:0.8;">Available Balance</div>
         <div class="bal-amt">₹<span id="uBal">0.00</span></div>
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button onclick="openM('depM')" style="flex:1; padding:12px; background:var(--green); border:none; border-radius:10px; color:white; font-weight:bold;">DEPOSIT</button>
             <button onclick="openM('witM')" style="flex:1; padding:12px; background:var(--red); border:none; border-radius:10px; color:white; font-weight:bold;">WITHDRAW</button>
         </div>
-        <div onclick="openAdminCheck()" style="text-align:center; font-size:10px; margin-top:12px; opacity:0.3;">ADMIN PANEL</div>
+        <div onclick="openAdminCheck()" style="text-align:center; font-size:10px; margin-top:12px; opacity:0.3; cursor:pointer;">ADMIN PANEL</div>
     </div>
 
     <div class="game-card">
@@ -65,15 +67,25 @@
         </div>
     </div>
 
+    <div style="padding:0 15px;">
+        <button onclick="copyInvite()" style="background:rgba(255,193,7,0.1); border:1px dashed var(--accent); color:var(--accent); padding:15px; border-radius:12px; width:100%; font-size:14px; font-weight:bold;">🎁 INVITE FRIENDS & EARN ₹50</button>
+    </div>
+
     <div class="game-card">
         <div style="font-weight:bold; border-bottom:1px solid #3f478a; padding-bottom:10px; margin-bottom:10px;">TREND HISTORY</div>
         <div id="hGrid"></div>
     </div>
 </div>
 
+<div id="resultPopup">
+    <h2 id="resTitle" style="margin:0;">-</h2>
+    <p id="resAmt" style="font-size:24px; font-weight:bold; margin:10px 0;">-</p>
+    <button onclick="closeResult()" style="background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:10px;">OK</button>
+</div>
+
 <div id="depM" class="modal"><div class="modal-content">
     <h3>Deposit</h3>
-    <div id="qrBox" style="display:none; margin-bottom:10px;"><img id="qrImg" src="" style="width:160px; border:4px solid #fff; border-radius:10px;"></div>
+    <div id="qrBox" style="display:none;"><img id="qrImg" src="" style="width:160px; border:4px solid #fff; border-radius:10px; margin-bottom:10px;"></div>
     <input type="number" id="da" placeholder="Enter Amount" oninput="showQR()">
     <p style="font-size:11px; color:var(--accent);">UPI: poonamlondhe52-1@okhdfcbank</p>
     <input type="text" id="du" placeholder="12 Digit UTR Number">
@@ -83,19 +95,17 @@
 
 <div id="witM" class="modal"><div class="modal-content">
     <h3>Withdraw</h3>
-    <input type="number" id="wa" placeholder="Enter Amount">
+    <input type="number" id="wa" placeholder="Enter Amount (Min 200)">
     <input type="text" id="wu" placeholder="Your UPI ID">
-    <button onclick="sendW()" style="width:100%; padding:15px; background:var(--red); border:none; border-radius:10px; color:white; font-weight:bold;">SUBMIT REQUEST</button>
+    <button onclick="sendW()" style="width:100%; padding:15px; background:var(--red); border:none; border-radius:10px; color:white; font-weight:bold;">SUBMIT</button>
     <button onclick="closeM('witM')" style="background:none; border:none; color:red; margin-top:10px;">Cancel</button>
 </div></div>
 
 <div id="adminPanel" class="modal" style="background:#0c0f26;"><div class="modal-content" style="width:95%; height:90%; overflow-y:auto; border:2px solid var(--accent);">
-    <button onclick="closeM('adminPanel')" style="float:right; background:red; color:white; border:none; padding:8px 15px; border-radius:5px;">X</button>
+    <button onclick="closeM('adminPanel')" style="float:right; background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">X</button>
     <h2 style="color:var(--accent);">ADMIN DASHBOARD</h2>
-    <h4 style="color:#fff; text-align:left;">Pending Deposits:</h4>
-    <div id="depData"></div>
-    <h4 style="color:#fff; text-align:left; margin-top:20px;">Pending Withdrawals:</h4>
-    <div id="witData"></div>
+    <h4 style="color:#fff; text-align:left;">Deposits:</h4> <div id="depData"></div>
+    <h4 style="color:#fff; text-align:left; margin-top:20px;">Withdrawals:</h4> <div id="witData"></div>
 </div></div>
 
 <script>
@@ -125,7 +135,7 @@
             document.getElementById('gameUI').style.display = 'block';
             db.ref('users/' + uid).once('value', s => { if(!s.val()) db.ref('users/' + uid).set({ balance: 0, phone: phone }); });
             initGame();
-        } else { alert("Enter valid number"); }
+        } else { alert("Enter 10-digit number"); }
     }
 
     function initGame() {
@@ -144,13 +154,13 @@
     }
 
     function placeBet(color) {
-        let amt = prompt("Amount on " + color + ":", "10");
-        if(amt && myBal >= amt) {
+        let amt = prompt("Bet on " + color + " (Amount):", "10");
+        if(amt && myBal >= amt && amt >= 10) {
             db.ref('users/'+uid).update({ balance: myBal - parseFloat(amt) });
             currentBet = { color: color, amount: parseFloat(amt) };
             db.ref('active_bets').push({ color: color, amount: parseFloat(amt) });
-            alert("Bet Placed!");
-        } else { alert("Check balance!"); }
+            alert("Bet Placed on " + color);
+        } else { alert("Insufficient Balance!"); }
     }
 
     function processResult() {
@@ -160,14 +170,38 @@
             let winColor = Object.keys(pools).reduce((a, b) => pools[a] < pools[b] ? a : b);
             let hex = { Green: '#00c853', Red: '#ff1744', Violet: '#aa00ff' }[winColor];
             db.ref('history').push(hex);
-            if(currentBet && currentBet.color === winColor) {
-                db.ref('users/'+uid).update({ balance: myBal + (currentBet.amount * 1.9) });
+            
+            // Result Popup Logic
+            if(currentBet) {
+                if(currentBet.color === winColor) {
+                    let winAmt = currentBet.amount * 1.9;
+                    db.ref('users/'+uid).update({ balance: myBal + winAmt });
+                    showResult("YOU WON", "+₹" + winAmt.toFixed(2), "#00c853");
+                } else {
+                    showResult("YOU LOST", "-₹" + currentBet.amount, "#ff1744");
+                }
+                currentBet = null;
             }
-            currentBet = null;
             db.ref('active_bets').remove();
         });
     }
 
+    function showResult(title, amt, color) {
+        document.getElementById('resTitle').innerText = title;
+        document.getElementById('resTitle').style.color = color;
+        document.getElementById('resAmt').innerText = amt;
+        document.getElementById('resultPopup').style.display = 'block';
+    }
+
+    function closeResult() { document.getElementById('resultPopup').style.display = 'none'; }
+
+    function copyInvite() {
+        let link = window.location.href;
+        navigator.clipboard.writeText("Play 1CLUB PRO and earn daily! Join now: " + link);
+        alert("Invite link copied to clipboard!");
+    }
+
+    // --- Admin & Other Functions (Same as before) ---
     function showQR() {
         let a = document.getElementById('da').value;
         if(a >= 10) {
@@ -175,29 +209,21 @@
             document.getElementById('qrBox').style.display = 'block';
         }
     }
-
     function sendD() {
         let a = document.getElementById('da').value, u = document.getElementById('du').value;
-        if(a >= 10 && u.length >= 10) {
-            db.ref('pending_deposits').push({ uid: uid, amt: a, utr: u });
-            alert("Deposit Submitted!"); closeM('depM');
-        }
+        if(a >= 10 && u.length >= 10) { db.ref('pending_deposits').push({ uid: uid, amt: a, utr: u }); alert("Submitted!"); closeM('depM'); }
     }
-
     function sendW() {
         let a = document.getElementById('wa').value, u = document.getElementById('wu').value;
-        if(a >= 100 && myBal >= a) {
+        if(a >= 200 && myBal >= a) {
             db.ref('users/'+uid).update({ balance: myBal - parseFloat(a) });
             db.ref('pending_withdrawals').push({ uid: uid, amt: a, upi: u });
-            alert("Withdrawal Requested!"); closeM('witM');
-        } else { alert("Min 100 or Low Balance!"); }
+            alert("Requested!"); closeM('witM');
+        } else { alert("Min ₹200 or Low Balance!"); }
     }
-
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
-
-    function openAdminCheck() { if(prompt("Pass:") === "77759636477") { openM('adminPanel'); loadAdmin(); } }
-
+    function openAdminCheck() { if(prompt("Admin Pass:") === "77759636477") { openM('adminPanel'); loadAdmin(); } }
     function loadAdmin() {
         db.ref('pending_deposits').on('value', s => {
             let h = "<table><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr>";
@@ -210,13 +236,8 @@
             document.getElementById('witData').innerHTML = h + "</table>";
         });
     }
-
-    function appD(k, u, a) {
-        db.ref('users/'+u+'/balance').transaction(c => (c || 0) + parseFloat(a));
-        db.ref('pending_deposits/'+k).remove();
-    }
+    function appD(k, u, a) { db.ref('users/'+u+'/balance').transaction(c => (c || 0) + parseFloat(a)); db.ref('pending_deposits/'+k).remove(); }
     function appW(k) { db.ref('pending_withdrawals/'+k).remove(); alert("Paid!"); }
-
     function loadHistory() {
         db.ref('history').limitToLast(24).on('value', s => {
             let g = document.getElementById('hGrid'); g.innerHTML = "";
