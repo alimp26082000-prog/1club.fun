@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1CLUB PRO - Official</title>
+
+<title>1CLUB PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -23,7 +25,7 @@ body{
 font-family:Segoe UI;
 background:var(--bg);
 margin:0;
-color:#fff;
+color:white;
 }
 
 #loginScreen{
@@ -33,17 +35,24 @@ background:var(--bg);
 display:flex;
 align-items:center;
 justify-content:center;
-z-index:9999;
 }
 
 .login-card{
 background:var(--primary);
 padding:30px;
 border-radius:20px;
-width:100%;
-max-width:400px;
 text-align:center;
-border:1px solid var(--accent);
+width:90%;
+max-width:400px;
+}
+
+input{
+width:90%;
+padding:12px;
+margin:10px;
+border-radius:10px;
+border:none;
+text-align:center;
 }
 
 .top-nav{
@@ -54,34 +63,44 @@ justify-content:space-between;
 }
 
 .wallet-card{
-background:linear-gradient(135deg,#3f478a,#2b3270);
+background:#1e254d;
 margin:15px;
 padding:20px;
-border-radius:20px;
+border-radius:15px;
 text-align:center;
 }
 
 .bal-amt{
 font-size:36px;
-font-weight:bold;
 color:var(--accent);
-}
-
-.game-card{
-background:#1e254d;
-margin:10px;
-border-radius:20px;
-padding:20px;
 }
 
 .bet-btn{
 border:none;
 padding:15px;
 border-radius:12px;
-font-weight:900;
-color:#fff;
-cursor:pointer;
+font-weight:bold;
+color:white;
 width:31%;
+}
+
+.game-card{
+background:#1e254d;
+margin:10px;
+padding:20px;
+border-radius:15px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #333;
+padding:8px;
+text-align:center;
 }
 
 .modal{
@@ -89,7 +108,6 @@ display:none;
 position:fixed;
 inset:0;
 background:rgba(0,0,0,0.9);
-z-index:5000;
 align-items:center;
 justify-content:center;
 }
@@ -99,46 +117,25 @@ background:var(--primary);
 padding:20px;
 border-radius:20px;
 width:90%;
-max-width:400px;
-text-align:center;
-}
-
-input{
-width:90%;
-padding:12px;
-margin:10px 0;
-border-radius:10px;
-border:none;
-background:#0c0f26;
-color:#fff;
-text-align:center;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-font-size:13px;
-}
-
-th,td{
-border:1px solid #3f478a;
-padding:8px;
+max-width:350px;
 text-align:center;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div id="loginScreen">
+
 <div class="login-card">
-<h1 style="color:var(--accent)">1CLUB PRO</h1>
 
-<input type="number" id="lPhone" placeholder="Enter Mobile Number">
+<h2 style="color:var(--accent)">1CLUB PRO</h2>
 
-<button onclick="instantLogin()" style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;font-weight:bold;">
+<input type="tel" id="lPhone" placeholder="Enter Mobile Number" maxlength="10">
+
+<button onclick="instantLogin()" style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:10px;font-weight:bold;">
 START GAME
 </button>
 
@@ -148,13 +145,17 @@ START GAME
 <div id="gameUI" style="display:none">
 
 <div class="top-nav">
+
 <div>1CLUB <span style="color:var(--accent)">PRO</span></div>
-<div id="uID">ID...</div>
+
+<div id="uID"></div>
+
 </div>
 
 <div class="wallet-card">
 
-<div>Balance</div>
+Balance
+
 <div class="bal-amt">₹<span id="uBal">0</span></div>
 
 </div>
@@ -189,7 +190,7 @@ START GAME
 
 <div style="padding:15px">
 
-<h3>Last Results</h3>
+<h3>Last 20 Results</h3>
 
 <table>
 
@@ -209,13 +210,14 @@ START GAME
 </div>
 
 <div id="betModal" class="modal">
+
 <div class="modal-content">
 
 <h3 id="betTitle"></h3>
 
 <input type="number" id="betAmount" placeholder="Enter Amount">
 
-<button onclick="confirmBet()" style="background:var(--green);padding:12px;border:none;border-radius:10px;color:#fff;width:100%;font-weight:bold;">
+<button onclick="confirmBet()" style="background:var(--green);padding:12px;border:none;border-radius:10px;color:white;width:100%;">
 CONFIRM BET
 </button>
 
@@ -224,73 +226,76 @@ Cancel
 </button>
 
 </div>
+
 </div>
 
 <script>
 
-const firebaseConfig = {
-apiKey:"AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
+const firebaseConfig={
+apiKey:"AIzaSyCrt3",
 authDomain:"my-colour-game-670af.firebaseapp.com",
 databaseURL:"https://my-colour-game-670af-default-rtdb.firebaseio.com",
-projectId:"my-colour-game-670af",
-};
+projectId:"my-colour-game-670af"
+}
 
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig)
 
-const db=firebase.database();
+const db=firebase.database()
 
-let uid=localStorage.getItem("ouid");
+let uid=localStorage.getItem("ouid")
 
-let myBal=0;
+let myBal=0
 
-let selectedColor="";
+let selectedColor=""
 
-let periodBets={Green:0,Red:0,Violet:0};
+let periodBets={Green:0,Red:0,Violet:0}
 
-if(uid){showGameUI();}
+let lastPeriod=null
+
+if(uid){showGameUI()}
 
 function instantLogin(){
 
-let phone=document.getElementById("lPhone").value.trim();
+let phone=document.getElementById("lPhone").value.trim()
 
-if(phone.length<10){
+if(phone.length!=10){
 
-alert("Enter valid number");
+alert("Enter 10 digit mobile number")
 
-return;
+return
 
 }
 
-uid="ID"+phone.slice(-4);
+uid="ID"+phone
 
-localStorage.setItem("ouid",uid);
+localStorage.setItem("ouid",uid)
 
-db.ref("users/"+uid).once("value").then(snap=>{
+db.ref("users/"+uid).once("value").then(s=>{
 
-if(!snap.exists()){
+if(!s.exists()){
 
 db.ref("users/"+uid).set({
 
 balance:0,
 phone:phone
 
-});
+})
 
 }
 
-showGameUI();
+showGameUI()
 
-});
+})
 
 }
 
 function showGameUI(){
 
-document.getElementById("loginScreen").style.display="none";
+document.getElementById("loginScreen").style.display="none"
 
-document.getElementById("gameUI").style.display="block";
+document.getElementById("gameUI").style.display="block"
 
-initSystem();
+initSystem()
 
 }
 
@@ -298,59 +303,69 @@ function initSystem(){
 
 db.ref("users/"+uid).on("value",s=>{
 
-myBal=s.val()?s.val().balance:0;
+myBal=s.val()?s.val().balance:0
 
-document.getElementById("uBal").innerText=myBal.toFixed(2);
+document.getElementById("uBal").innerText=myBal.toFixed(2)
 
-document.getElementById("uID").innerText="ID:"+uid;
+document.getElementById("uID").innerText="ID:"+uid
 
-});
+})
 
-setInterval(()=>{
+setInterval(updateTimer,1000)
 
-let sec=60-new Date().getSeconds();
+loadHistory()
 
-document.getElementById("timer").innerText="00:"+sec;
+}
 
-document.getElementById("period").innerText=Math.floor(new Date().getTime()/10000);
+function updateTimer(){
 
-if(sec==1){calculateRound();}
+let sec=60-new Date().getSeconds()
 
-},1000);
+document.getElementById("timer").innerText="00:"+String(sec).padStart(2,"0")
 
-loadHistory();
+let currentPeriod=Math.floor(new Date().getTime()/60000)
+
+document.getElementById("period").innerText=currentPeriod
+
+if(lastPeriod!=currentPeriod){
+
+lastPeriod=currentPeriod
+
+calculateRound()
+
+}
 
 }
 
 function placeBet(color){
 
-selectedColor=color;
+selectedColor=color
 
-document.getElementById("betTitle").innerText="Bet on "+color;
+document.getElementById("betTitle").innerText="Bet on "+color
 
-document.getElementById("betAmount").value="";
+document.getElementById("betAmount").value=""
 
-openM("betModal");
+openM("betModal")
 
 }
 
 function confirmBet(){
 
-let amt=parseFloat(document.getElementById("betAmount").value);
+let amt=parseFloat(document.getElementById("betAmount").value)
 
 if(!amt||amt<10){
 
-alert("Minimum bet ₹10");
+alert("Minimum Bet ₹10")
 
-return;
+return
 
 }
 
 if(myBal<amt){
 
-alert("Insufficient balance");
+alert("Insufficient Balance")
 
-return;
+return
 
 }
 
@@ -358,9 +373,9 @@ db.ref("users/"+uid).update({
 
 balance:myBal-amt
 
-});
+})
 
-periodBets[selectedColor]+=amt;
+periodBets[selectedColor]+=amt
 
 db.ref("active_bets").push({
 
@@ -368,21 +383,21 @@ uid:uid,
 color:selectedColor,
 amount:amt
 
-});
+})
 
-closeM("betModal");
+closeM("betModal")
 
-alert("Bet placed");
+alert("Bet Placed")
 
 }
 
 function calculateRound(){
 
-let colors=["Green","Red","Violet"];
+let colors=["Green","Red","Violet"]
 
-let winColor=colors[Math.floor(Math.random()*3)];
+let winColor=colors[Math.floor(Math.random()*3)]
 
-let winAmt=periodBets[winColor]*1.9;
+let winAmt=periodBets[winColor]*1.9
 
 if(winAmt>0){
 
@@ -390,25 +405,24 @@ db.ref("users/"+uid).update({
 
 balance:myBal+winAmt
 
-});
+})
 
-alert("WIN ₹"+winAmt);
+alert("WIN ₹"+winAmt)
 
-}else{
+}else if(periodBets.Green+periodBets.Red+periodBets.Violet>0){
 
-alert("Lost");
+alert("LOST")
 
 }
 
 db.ref("history").push({
 
-period:document.getElementById("period").innerText,
-
+period:lastPeriod,
 color:winColor
 
-});
+})
 
-periodBets={Green:0,Red:0,Violet:0};
+periodBets={Green:0,Red:0,Violet:0}
 
 }
 
@@ -416,34 +430,34 @@ function loadHistory(){
 
 db.ref("history").limitToLast(20).on("value",snap=>{
 
-let html="";
+let html=""
 
 snap.forEach(d=>{
 
-let data=d.val();
+let data=d.val()
 
 html=`<tr>
 <td>${data.period}</td>
 <td style="color:${data.color}">${data.color}</td>
-</tr>`+html;
+</tr>`+html
 
-});
+})
 
-document.getElementById("historyTable").innerHTML=html;
+document.getElementById("historyTable").innerHTML=html
 
-});
+})
 
 }
 
 function openM(id){
 
-document.getElementById(id).style.display="flex";
+document.getElementById(id).style.display="flex"
 
 }
 
 function closeM(id){
 
-document.getElementById(id).style.display="none";
+document.getElementById(id).style.display="none"
 
 }
 
