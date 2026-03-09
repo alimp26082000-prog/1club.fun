@@ -1,17 +1,14 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>1CLUB PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
 <style>
-
 :root{
 --primary:#2b3270;
 --bg:#0c0f26;
@@ -120,43 +117,37 @@ width:90%;
 max-width:350px;
 text-align:center;
 }
-
 </style>
-
 </head>
 
 <body>
 
 <div id="loginScreen">
-
 <div class="login-card">
-
 <h2 style="color:var(--accent)">1CLUB PRO</h2>
-
 <input type="tel" id="lPhone" placeholder="Enter Mobile Number" maxlength="10">
-
-<button onclick="instantLogin()" style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:10px;font-weight:bold;">
-START GAME
-</button>
-
+<button onclick="instantLogin()" style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:10px;font-weight:bold;">START GAME</button>
 </div>
 </div>
 
 <div id="gameUI" style="display:none">
 
 <div class="top-nav">
-
 <div>1CLUB <span style="color:var(--accent)">PRO</span></div>
-
 <div id="uID"></div>
-
 </div>
 
 <div class="wallet-card">
-
 Balance
-
 <div class="bal-amt">₹<span id="uBal">0</span></div>
+
+<div style="margin-top:15px">
+<button onclick="openM('depM')" style="background:var(--green);padding:10px;border:none;border-radius:8px;color:white;">Deposit</button>
+
+<button onclick="openM('witM')" style="background:var(--red);padding:10px;border:none;border-radius:8px;color:white;">Withdraw</button>
+
+<button onclick="checkAdminAccess()" style="background:var(--accent);padding:10px;border:none;border-radius:8px;">Admin</button>
+</div>
 
 </div>
 
@@ -193,46 +184,58 @@ Balance
 <h3>Last 20 Results</h3>
 
 <table>
-
 <thead>
 <tr>
 <th>Period</th>
 <th>Result</th>
 </tr>
 </thead>
-
 <tbody id="historyTable"></tbody>
-
 </table>
 
 </div>
 
 </div>
 
+<!-- BET MODAL -->
+
 <div id="betModal" class="modal">
-
 <div class="modal-content">
-
 <h3 id="betTitle"></h3>
-
 <input type="number" id="betAmount" placeholder="Enter Amount">
-
-<button onclick="confirmBet()" style="background:var(--green);padding:12px;border:none;border-radius:10px;color:white;width:100%;">
-CONFIRM BET
-</button>
-
-<button onclick="closeM('betModal')" style="margin-top:10px;background:none;border:none;color:red;">
-Cancel
-</button>
-
+<button onclick="confirmBet()" style="background:var(--green);padding:12px;border:none;border-radius:10px;color:white;width:100%;">CONFIRM BET</button>
+<button onclick="closeM('betModal')" style="margin-top:10px;background:none;border:none;color:red;">Cancel</button>
+</div>
 </div>
 
+<!-- DEPOSIT -->
+
+<div id="depM" class="modal">
+<div class="modal-content">
+<h3>Deposit</h3>
+<input type="number" id="da" placeholder="Amount">
+<input type="text" id="du" placeholder="UTR Number">
+<button onclick="sendD()" style="background:var(--green);padding:10px;border:none;border-radius:8px;color:white;">Submit</button>
+<button onclick="closeM('depM')" style="margin-top:10px">Cancel</button>
+</div>
+</div>
+
+<!-- WITHDRAW -->
+
+<div id="witM" class="modal">
+<div class="modal-content">
+<h3>Withdraw</h3>
+<input type="number" id="wa" placeholder="Amount">
+<input type="text" id="wu" placeholder="UPI ID">
+<button onclick="sendW()" style="background:var(--red);padding:10px;border:none;border-radius:8px;color:white;">Submit</button>
+<button onclick="closeM('witM')" style="margin-top:10px">Cancel</button>
+</div>
 </div>
 
 <script>
 
 const firebaseConfig={
-apiKey:"AIzaSyCrt3",
+apiKey:"AIzaSy",
 authDomain:"my-colour-game-670af.firebaseapp.com",
 databaseURL:"https://my-colour-game-670af-default-rtdb.firebaseio.com",
 projectId:"my-colour-game-670af"
@@ -245,11 +248,8 @@ const db=firebase.database()
 let uid=localStorage.getItem("ouid")
 
 let myBal=0
-
 let selectedColor=""
-
 let periodBets={Green:0,Red:0,Violet:0}
-
 let lastPeriod=null
 
 if(uid){showGameUI()}
@@ -258,29 +258,18 @@ function instantLogin(){
 
 let phone=document.getElementById("lPhone").value.trim()
 
-if(phone.length!=10){
-
+if(phone.length!==10){
 alert("Enter 10 digit mobile number")
-
 return
-
 }
 
 uid="ID"+phone
-
 localStorage.setItem("ouid",uid)
 
 db.ref("users/"+uid).once("value").then(s=>{
 
 if(!s.exists()){
-
-db.ref("users/"+uid).set({
-
-balance:0,
-phone:phone
-
-})
-
+db.ref("users/"+uid).set({balance:0,phone:phone})
 }
 
 showGameUI()
@@ -290,25 +279,17 @@ showGameUI()
 }
 
 function showGameUI(){
-
 document.getElementById("loginScreen").style.display="none"
-
 document.getElementById("gameUI").style.display="block"
-
 initSystem()
-
 }
 
 function initSystem(){
 
 db.ref("users/"+uid).on("value",s=>{
-
 myBal=s.val()?s.val().balance:0
-
 document.getElementById("uBal").innerText=myBal.toFixed(2)
-
 document.getElementById("uID").innerText="ID:"+uid
-
 })
 
 setInterval(updateTimer,1000)
@@ -327,26 +308,18 @@ let currentPeriod=Math.floor(new Date().getTime()/60000)
 
 document.getElementById("period").innerText=currentPeriod
 
-if(lastPeriod!=currentPeriod){
-
+if(lastPeriod!==currentPeriod){
 lastPeriod=currentPeriod
-
 calculateRound()
-
 }
 
 }
 
 function placeBet(color){
-
 selectedColor=color
-
 document.getElementById("betTitle").innerText="Bet on "+color
-
 document.getElementById("betAmount").value=""
-
 openM("betModal")
-
 }
 
 function confirmBet(){
@@ -354,44 +327,26 @@ function confirmBet(){
 let amt=parseFloat(document.getElementById("betAmount").value)
 
 if(!amt||amt<10){
-
 alert("Minimum Bet ₹10")
-
 return
-
 }
 
 if(myBal<amt){
-
 alert("Insufficient Balance")
-
 return
-
 }
 
-db.ref("users/"+uid).update({
-
-balance:myBal-amt
-
-})
+db.ref("users/"+uid).update({balance:myBal-amt})
 
 periodBets[selectedColor]+=amt
 
-db.ref("active_bets").push({
-
-uid:uid,
-color:selectedColor,
-amount:amt
-
-})
-
 closeM("betModal")
-
-alert("Bet Placed")
 
 }
 
 function calculateRound(){
+
+let totalBet=periodBets.Green+periodBets.Red+periodBets.Violet
 
 let colors=["Green","Red","Violet"]
 
@@ -399,27 +354,25 @@ let winColor=colors[Math.floor(Math.random()*3)]
 
 let winAmt=periodBets[winColor]*1.9
 
+if(totalBet>0){
+
 if(winAmt>0){
 
-db.ref("users/"+uid).update({
-
-balance:myBal+winAmt
-
-})
+db.ref("users/"+uid).update({balance:myBal+winAmt})
 
 alert("WIN ₹"+winAmt)
 
-}else if(periodBets.Green+periodBets.Red+periodBets.Violet>0){
+}else{
 
 alert("LOST")
 
 }
 
-db.ref("history").push({
+}
 
+db.ref("history").push({
 period:lastPeriod,
 color:winColor
-
 })
 
 periodBets={Green:0,Red:0,Violet:0}
@@ -449,16 +402,58 @@ document.getElementById("historyTable").innerHTML=html
 
 }
 
-function openM(id){
+function sendD(){
 
-document.getElementById(id).style.display="flex"
+let a=document.getElementById("da").value
+let u=document.getElementById("du").value
+
+if(a>=10 && u){
+
+db.ref("pending_deposits").push({uid,amt:a,utr:u})
+
+alert("Deposit Request Sent")
+
+closeM("depM")
 
 }
 
+}
+
+function sendW(){
+
+let a=document.getElementById("wa").value
+let u=document.getElementById("wu").value
+
+if(a>=200 && myBal>=a){
+
+db.ref("users/"+uid).update({balance:myBal-a})
+
+db.ref("pending_withdrawals").push({uid,amt:a,upi:u})
+
+alert("Withdraw Request Sent")
+
+closeM("witM")
+
+}
+
+}
+
+function checkAdminAccess(){
+
+if(prompt("Enter Admin Password")=="7777"){
+
+alert("Admin Access")
+
+}
+
+}
+
+function openM(id){
+document.getElementById(id).style.display="flex"
+}
+
 function closeM(id){
-
 document.getElementById(id).style.display="none"
-
 }
 
 </script>
