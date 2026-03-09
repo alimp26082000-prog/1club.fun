@@ -9,94 +9,93 @@
     <style>
         :root { --primary: #2b3270; --bg: #0c0f26; --accent: #ffc107; --green: #00c853; --red: #ff1744; --violet: #aa00ff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: #fff; user-select: none; }
-        .top-nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top: 0; z-index: 100; }
+        .top-nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .wallet-card { background: linear-gradient(135deg, #3f478a, #2b3270); margin: 15px; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 8px 16px rgba(0,0,0,0.4); }
         .bal-amt { font-size: 38px; font-weight: bold; color: var(--accent); margin: 10px 0; }
-        .game-card { background: #1e254d; margin: 15px; border-radius: 20px; padding: 20px; border: 1px solid #3f478a; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .game-card { background: #1e254d; margin: 15px; border-radius: 20px; padding: 20px; border: 1px solid #3f478a; }
         .bet-btn { border: none; padding: 16px; border-radius: 12px; font-weight: 900; color: #fff; cursor: pointer; width: 31%; transition: 0.2s; font-size: 14px; }
         .bet-btn:active { transform: scale(0.9); }
-        .trend-dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin: 4px; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+        .trend-dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin: 4px; border: 1px solid rgba(255,255,255,0.2); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center; }
-        .modal-content { background: var(--primary); padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; border: 1px solid var(--accent); text-align: center; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content { background: var(--primary); padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; border: 1px solid var(--accent); text-align: center; }
         input { width: 90%; padding: 14px; margin: 12px 0; border-radius: 12px; border: none; background: #0c0f26; color: #fff; text-align: center; font-size: 16px; }
         .history-box { margin: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; min-height: 100px; }
         table { width: 100%; color: #fff; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { border: 1px solid rgba(255,255,255,0.1); padding: 10px; text-align: center; }
-        .invite-btn { background: var(--accent); color: #000; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 900; cursor: pointer; margin: 10px 0; width: 85%; box-shadow: 0 5px 15px rgba(255,193,7,0.3); }
+        .invite-btn { background: var(--accent); color: #000; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 900; cursor: pointer; margin: 10px 0; width: 85%; }
     </style>
 </head>
 <body>
 
-<div id="dashboard">
+<div id="mainUI">
     <div class="top-nav">
-        <div style="font-weight:900; font-size:24px; letter-spacing:1px;">1CLUB <span style="color:var(--accent);">PRO</span></div>
-        <div id="uID" style="font-size:12px; background:rgba(0,0,0,0.3); padding:6px 15px; border-radius:30px; border:1px solid rgba(255,255,255,0.1);">ID: ...</div>
+        <div style="font-weight:900; font-size:24px;">1CLUB <span style="color:var(--accent);">PRO</span></div>
+        <div id="displayID" style="font-size:12px; background:rgba(0,0,0,0.3); padding:6px 15px; border-radius:30px;">ID: Connecting...</div>
     </div>
 
     <div class="wallet-card">
-        <div style="font-size:14px; opacity:0.7; text-transform:uppercase; letter-spacing:1px;">Available Balance</div>
-        <div class="bal-amt" onclick="adminCheck()">₹<span id="uBal">0.00</span></div>
+        <div style="font-size:14px; opacity:0.7;">Wallet Balance</div>
+        <div class="bal-amt" onclick="adminTrigger()">₹<span id="displayBal">0.00</span></div>
         <div style="display:flex; gap:15px; margin-top:15px;">
-            <button onclick="openM('depM')" style="flex:1; padding:15px; background:var(--green); border:none; border-radius:15px; color:#fff; font-weight:bold; font-size:15px;">DEPOSIT</button>
-            <button onclick="openM('witM')" style="flex:1; padding:15px; background:var(--red); border:none; border-radius:15px; color:#fff; font-weight:bold; font-size:15px;">WITHDRAW</button>
+            <button onclick="openM('depM')" style="flex:1; padding:15px; background:var(--green); border:none; border-radius:15px; color:#fff; font-weight:bold;">DEPOSIT</button>
+            <button onclick="openM('witM')" style="flex:1; padding:15px; background:var(--red); border:none; border-radius:15px; color:#fff; font-weight:bold;">WITHDRAW</button>
         </div>
     </div>
 
     <div class="game-card">
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <div><small style="opacity:0.6;">Current Period</small><br><b id="period" style="font-size:20px;">...</b></div>
-            <div style="text-align:right;"><small style="opacity:0.6;">Timer</small><br><b id="timer" style="color:var(--accent); font-size:28px;">00:00</b></div>
+            <div><small style="opacity:0.6;">Period</small><br><b id="pText" style="font-size:20px;">000000</b></div>
+            <div style="text-align:right;"><small style="opacity:0.6;">Time Left</small><br><b id="tText" style="color:var(--accent); font-size:28px;">00:00</b></div>
         </div>
         <div style="display:flex; justify-content:space-between;">
-            <button class="bet-btn" style="background:var(--green)" onclick="doBet('Green')">GREEN</button>
-            <button class="bet-btn" style="background:var(--violet)" onclick="doBet('Violet')">VIOLET</button>
-            <button class="bet-btn" style="background:var(--red)" onclick="doBet('Red')">RED</button>
+            <button class="bet-btn" style="background:var(--green)" onclick="placeBet('Green')">GREEN</button>
+            <button class="bet-btn" style="background:var(--violet)" onclick="placeBet('Violet')">VIOLET</button>
+            <button class="bet-btn" style="background:var(--red)" onclick="placeBet('Red')">RED</button>
         </div>
         <div style="margin-top:25px; text-align:center; padding-top:15px; border-top:1px solid rgba(255,255,255,0.05);">
-            <small style="opacity:0.5; font-weight:bold; letter-spacing:2px;">RECENT TRENDS (LAST 20)</small>
-            <div id="trends" style="margin-top:12px;"></div>
+            <small style="opacity:0.5; font-weight:bold;">RECENT TRENDS</small>
+            <div id="trendList" style="margin-top:12px;"></div>
         </div>
     </div>
 
-    <center><button class="invite-btn" onclick="shareLink()">🎁 INVITE FRIENDS (10% Bonus)</button></center>
+    <center><button class="invite-btn" onclick="copyInvite()">🎁 INVITE FRIENDS (10% Bonus)</button></center>
 
     <div class="history-box">
         <h3 style="margin:0 0 10px 0; color:var(--accent); font-size:16px;">MY GAME HISTORY</h3>
-        <div id="history">No active bets. Play now!</div>
+        <div id="betList">No active bets. Play now!</div>
     </div>
 </div>
 
-<div id="adminPanel" class="modal"><div class="modal-content" style="max-width:600px;">
+<div id="adminM" class="modal"><div class="modal-content" style="max-width:600px;">
     <h3 style="color:var(--accent);">ADMIN CONTROL HUB</h3>
-    <div id="liveBets" style="background:#0c0f26; padding:15px; border-radius:12px; margin-bottom:15px; font-family:monospace; color:var(--green);">Loading bets...</div>
+    <div id="poolDisplay" style="background:#0c0f26; padding:15px; border-radius:12px; margin-bottom:15px; color:var(--green); font-weight:bold;">Waiting for bets...</div>
     <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button onclick="forceWin('Green')" style="flex:1; background:var(--green); border:none; padding:12px; color:white; border-radius:8px; font-weight:bold;">WIN G</button>
-        <button onclick="forceWin('Violet')" style="flex:1; background:var(--violet); border:none; padding:12px; color:white; border-radius:8px; font-weight:bold;">WIN V</button>
-        <button onclick="forceWin('Red')" style="flex:1; background:var(--red); border:none; padding:12px; color:white; border-radius:8px; font-weight:bold;">WIN R</button>
+        <button onclick="setWinner('Green')" style="flex:1; background:var(--green); border:none; padding:12px; color:white; border-radius:8px;">WIN G</button>
+        <button onclick="setWinner('Violet')" style="flex:1; background:var(--violet); border:none; padding:12px; color:white; border-radius:8px;">WIN V</button>
+        <button onclick="setWinner('Red')" style="flex:1; background:var(--red); border:none; padding:12px; color:white; border-radius:8px;">WIN R</button>
     </div>
-    <div id="reqList" style="max-height:250px; overflow-y:auto; font-size:12px;"></div>
-    <button onclick="closeM('adminPanel')" style="width:100%; margin-top:20px; padding:15px; background:var(--red); border:none; color:white; border-radius:12px; font-weight:bold;">EXIT ADMIN</button>
+    <div id="requestDisplay" style="max-height:250px; overflow-y:auto; text-align:left;"></div>
+    <button onclick="closeM('adminM')" style="width:100%; margin-top:20px; padding:15px; background:var(--red); border:none; color:white; border-radius:12px;">CLOSE ADMIN</button>
 </div></div>
 
 <div id="depM" class="modal"><div class="modal-content">
     <h3>DEPOSIT CASH</h3>
-    <input type="number" id="dAmt" placeholder="Amount (Min ₹100)" oninput="drawQR()">
-    <div id="qrBox" style="display:none; margin:15px 0;">
-        <img id="qr" src="" style="width:200px; border:8px solid #fff; border-radius:15px;">
-        <p style="font-size:12px; color:var(--accent); margin-top:8px;">Send to: poonamlondhe52-1@okhdfcbank</p>
+    <input type="number" id="depAmount" placeholder="Amount (Min ₹100)" oninput="makeQR()">
+    <div id="qrFrame" style="display:none; margin:15px 0;">
+        <img id="qrCode" src="" style="width:200px; border:8px solid #fff; border-radius:15px;">
+        <p style="font-size:12px; color:var(--accent); margin-top:8px;">UPI: poonamlondhe52-1@okhdfcbank</p>
     </div>
-    <input type="text" id="dUTR" placeholder="12 Digit UTR Number">
-    <button onclick="sendDep()" style="width:100%; padding:15px; background:var(--green); border:none; color:white; font-weight:bold; border-radius:15px;">SUBMIT REQUEST</button>
-    <button onclick="closeM('depM')" style="margin-top:12px; background:none; border:none; color:var(--red);">Close</button>
+    <input type="text" id="depUTR" placeholder="12 Digit UTR Number">
+    <button onclick="submitDep()" style="width:100%; padding:15px; background:var(--green); border:none; color:white; font-weight:bold; border-radius:12px;">SUBMIT REQUEST</button>
+    <button onclick="closeM('depM')" style="margin-top:10px; background:none; border:none; color:var(--red);">Close</button>
 </div></div>
 
 <div id="witM" class="modal"><div class="modal-content">
     <h3>WITHDRAWAL</h3>
-    <input type="number" id="wAmt" placeholder="Minimum ₹200">
-    <input type="text" id="wUpi" placeholder="UPI ID for Payout">
-    <button onclick="sendWit()" style="width:100%; padding:15px; background:var(--red); border:none; color:white; font-weight:bold; border-radius:15px;">REQUEST PAYOUT</button>
-    <button onclick="closeM('witM')" style="margin-top:12px; background:none; border:none; color:var(--red);">Close</button>
+    <input type="number" id="witAmount" placeholder="Minimum ₹200">
+    <input type="text" id="witUPI" placeholder="UPI ID for Payout">
+    <button onclick="submitWit()" style="width:100%; padding:15px; background:var(--red); border:none; color:white; font-weight:bold; border-radius:12px;">REQUEST PAYOUT</button>
+    <button onclick="closeM('witM')" style="margin-top:10px; background:none; border:none; color:var(--red);">Close</button>
 </div></div>
 
 <script>
@@ -112,128 +111,125 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Instant User Handling
-    let uid = localStorage.getItem('player_uid') || ("U" + Math.floor(1000 + Math.random() * 9000));
-    localStorage.setItem('player_uid', uid);
-    
-    let bal = 0, taps = 0, currentBets = [];
+    // Instant Player Initialization
+    let myUID = localStorage.getItem('user_id') || ("U" + Math.floor(Math.random() * 90000));
+    localStorage.setItem('user_id', myUID);
+    let myBal = 0, tapCount = 0, myBets = [];
 
-    // Sync User Info
-    db.ref('users/' + uid).on('value', s => {
-        let val = s.val();
-        if(!val) { db.ref('users/'+uid).set({balance:0, id:uid}); }
-        bal = val ? val.balance : 0;
-        document.getElementById('uBal').innerText = bal.toFixed(2);
-        document.getElementById('uID').innerText = "ID: " + uid;
+    // Sync Data
+    db.ref('users/' + myUID).on('value', s => {
+        let d = s.val();
+        if(!d) db.ref('users/'+myUID).set({balance:0, id:myUID});
+        myBal = d ? d.balance : 0;
+        document.getElementById('displayBal').innerText = myBal.toFixed(2);
+        document.getElementById('displayID').innerText = "ID: " + myUID;
     });
 
-    // Game Timer Logic
+    // Forced Timer Engine
     setInterval(() => {
-        let now = new Date(), sec = 60 - now.getSeconds();
-        document.getElementById('timer').innerText = "00:" + (sec < 10 ? "0"+sec : sec);
-        document.getElementById('period').innerText = Math.floor(now.getTime()/10000);
-        if(sec === 1) processGameRound();
+        let n = new Date(), s = 60 - n.getSeconds();
+        document.getElementById('tText').innerText = "00:" + (s < 10 ? "0"+s : s);
+        document.getElementById('pText').innerText = Math.floor(n.getTime()/10000);
+        if(s === 1) calculateResult();
     }, 1000);
 
-    function doBet(c) {
+    function placeBet(c) {
         let a = prompt(`Bet on ${c} (Min ₹10):`, "10");
-        if(a && bal >= a && a >= 10) {
+        if(a && myBal >= a && a >= 10) {
             let amt = parseFloat(a);
-            db.ref('users/'+uid).update({ balance: bal - amt });
-            let bet = { uid, color: c, amount: amt, period: document.getElementById('period').innerText };
-            db.ref('active_bets').push(bet);
-            currentBets.push(bet);
+            db.ref('users/'+myUID).update({ balance: myBal - amt });
+            let betObj = { uid: myUID, color: c, amount: amt, period: document.getElementById('pText').innerText };
+            db.ref('active_bets').push(betObj);
+            myBets.push(betObj);
             updateHistory();
-        } else { alert("Balance kam hai ya galat amount hai!"); }
+        } else { alert("Insufficient balance!"); }
     }
 
-    function processGameRound() {
+    function calculateResult() {
         db.ref('active_bets').once('value', (snap) => {
             let pools = { Green: 0, Red: 0, Violet: 0 };
             snap.forEach(b => { pools[b.val().color] += b.val().amount; });
-
-            db.ref('admin/next_win').once('value', s => {
+            db.ref('admin/forced').once('value', s => {
                 let win = s.val() || Object.keys(pools).reduce((a, b) => pools[a] < pools[b] ? a : b);
-                db.ref('admin/next_win').set(null); 
-                
-                currentBets.forEach(b => {
+                db.ref('admin/forced').set(null); 
+                myBets.forEach(b => {
                     if(b.color === win) {
-                        db.ref('users/'+uid).update({ balance: bal + (b.amount * 1.9) });
+                        db.ref('users/'+myUID).update({ balance: myBal + (b.amount * 1.9) });
                         alert("🎉 WIN! Period " + b.period);
                     }
                 });
                 db.ref('trends').push({ color: {Green:'#00c853', Red:'#ff1744', Violet:'#aa00ff'}[win] });
-                currentBets = []; updateHistory(); db.ref('active_bets').remove();
+                myBets = []; updateHistory(); db.ref('active_bets').remove();
             });
         });
     }
 
-    function adminCheck() {
-        taps++;
-        if(taps >= 5) {
-            if(prompt("Admin Key:") === "77759636477") { openM('adminPanel'); initAdmin(); }
-            taps = 0;
-        } setTimeout(() => taps = 0, 3000);
+    function adminTrigger() {
+        tapCount++;
+        if(tapCount >= 5) {
+            if(prompt("Admin Access Code:") === "77759636477") { openM('adminM'); startAdminLogs(); }
+            tapCount = 0;
+        } setTimeout(() => tapCount = 0, 3000);
     }
 
-    function initAdmin() {
+    function startAdminLogs() {
         db.ref('active_bets').on('value', s => {
-            let b = { Green: 0, Red: 0, Violet: 0 };
-            s.forEach(x => { b[x.val().color] += x.val().amount; });
-            document.getElementById('liveBets').innerText = `POOL -> G: ₹${b.Green} | V: ₹${b.Violet} | R: ₹${b.Red}`;
+            let p = { Green: 0, Red: 0, Violet: 0 };
+            s.forEach(x => { p[x.val().color] += x.val().amount; });
+            document.getElementById('poolDisplay').innerText = `G: ₹${p.Green} | V: ₹${p.Violet} | R: ₹${p.Red}`;
         });
         db.ref('requests').on('value', s => {
-            let h = "<table><tr><th>Type</th><th>UID</th><th>₹</th><th>Action</th></tr>";
+            let html = "<table><tr><th>Type</th><th>UID</th><th>₹</th><th>Action</th></tr>";
             s.forEach(r => {
-                h += `<tr><td>${r.val().type}</td><td>${r.val().uid}</td><td>${r.val().amt}</td>
-                <td><button onclick="approveReq('${r.key}','${r.val().uid}',${r.val().amt},'${r.val().type}')" style="background:var(--green); border:none; color:white; padding:4px; border-radius:4px;">Approve</button></td></tr>`;
+                html += `<tr><td>${r.val().type}</td><td>${r.val().uid}</td><td>${r.val().amt}</td>
+                <td><button onclick="approve('${r.key}','${r.val().uid}',${r.val().amt},'${r.val().type}')" style="background:var(--green); border:none; color:white; padding:5px; border-radius:5px;">Check</button></td></tr>`;
             });
-            document.getElementById('reqList').innerHTML = h + "</table>";
+            document.getElementById('requestDisplay').innerHTML = html + "</table>";
         });
     }
 
-    function approveReq(k, u, a, t) {
+    function approve(k, u, a, t) {
         if(t === 'Deposit') db.ref('users/'+u+'/balance').transaction(c => (c||0) + parseFloat(a));
-        db.ref('requests/'+k).remove(); alert("Done!");
+        db.ref('requests/'+k).remove(); alert("Verified!");
     }
 
-    function drawQR() {
-        let a = document.getElementById('dAmt').value;
+    function makeQR() {
+        let a = document.getElementById('depAmount').value;
         if(a >= 10) {
-            document.getElementById('qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`;
-            document.getElementById('qrBox').style.display = 'block';
+            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`;
+            document.getElementById('qrFrame').style.display = 'block';
         }
     }
 
-    function sendDep() {
-        let a = document.getElementById('dAmt').value, u = document.getElementById('dUTR').value;
-        if(a && u.length >= 10) { db.ref('requests').push({type:'Deposit', uid, amt:a, info:u}); alert("Request Sent!"); closeM('depM'); }
+    function submitDep() {
+        let a = document.getElementById('depAmount').value, u = document.getElementById('depUTR').value;
+        if(a && u.length >= 10) { db.ref('requests').push({type:'Deposit', uid: myUID, amt:a, info:u}); alert("Deposit Request Sent!"); closeM('depM'); }
     }
 
-    function sendWit() {
-        let a = document.getElementById('wAmt').value, u = document.getElementById('wUpi').value;
-        if(a >= 200 && bal >= a) {
-            db.ref('users/'+uid).update({balance: bal - a});
-            db.ref('requests').push({type:'Withdraw', uid, amt:a, info:u}); alert("Payout Requested!"); closeM('witM');
+    function submitWit() {
+        let a = document.getElementById('witAmount').value, u = document.getElementById('witUPI').value;
+        if(a >= 200 && myBal >= a) {
+            db.ref('users/'+myUID).update({balance: myBal - a});
+            db.ref('requests').push({type:'Withdraw', uid: myUID, amt:a, info:u}); alert("Withdrawal Sent!"); closeM('witM');
         }
     }
 
     function updateHistory() {
-        if(currentBets.length === 0) { document.getElementById('history').innerHTML = "No active bets."; return; }
-        let h = "<table><tr><th>Period</th><th>Color</th><th>Amount</th></tr>";
-        currentBets.forEach(b => { h += `<tr><td>${b.period}</td><td>${b.color}</td><td>₹${b.amount}</td></tr>`; });
-        document.getElementById('history').innerHTML = h + "</table>";
+        if(myBets.length === 0) { document.getElementById('betList').innerHTML = "No active bets."; return; }
+        let h = "<table><tr><th>Period</th><th>Color</th><th>Amt</th></tr>";
+        myBets.forEach(b => { h += `<tr><td>${b.period}</td><td>${b.color}</td><td>₹${b.amount}</td></tr>`; });
+        document.getElementById('betList').innerHTML = h + "</table>";
     }
 
-    db.ref('trends').limitToLast(20).on('value', s => {
-        let d = document.getElementById('trends'); d.innerHTML = "";
-        s.forEach(t => { d.innerHTML += `<div class="trend-dot" style="background:${t.val().color}"></div>`; });
+    db.ref('trends').limitToLast(18).on('value', s => {
+        let t = document.getElementById('trendList'); t.innerHTML = "";
+        s.forEach(x => { t.innerHTML += `<div class="trend-dot" style="background:${x.val().color}"></div>`; });
     });
 
-    function forceWin(c) { db.ref('admin/next_win').set(c); alert("Next winner locked: " + c); }
+    function setWinner(c) { db.ref('admin/forced').set(c); alert("Next winner: " + c); }
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
-    function shareLink() { navigator.clipboard.writeText(window.location.href); alert("Referral Link Copied!"); }
+    function copyInvite() { navigator.clipboard.writeText(window.location.href); alert("Referral Link Copied!"); }
 </script>
 </body>
 </html>
