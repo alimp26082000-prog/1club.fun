@@ -19,9 +19,11 @@
         .modal-content { background: #1a1f3c; padding: 20px; border-radius: 20px; width: 92%; max-width: 450px; border: 1px solid var(--accent); text-align: center; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #3f478a; background: #0c0f26; color: #fff; box-sizing: border-box; }
         .history-box { margin: 15px; background: #151a33; padding: 15px; border-radius: 20px; }
-        table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #252b52; }
-        .trend-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin: 3px; }
+        .invite-btn { background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 50px; font-weight: 900; width: 85%; margin: 20px auto; cursor: pointer; display: block; }
+        .appr-btn { background: var(--green); border: none; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .rejt-btn { background: var(--red); border: none; color: #fff; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -53,6 +55,8 @@
         <div id="trends" style="margin-top:20px; text-align:center;"></div>
     </div>
 
+    <button class="invite-btn" onclick="copyReferral()">🎁 INVITE FRIENDS (10% BONUS)</button>
+
     <div class="history-box">
         <h3 style="margin:0; font-size:14px; color:var(--accent);">MY GAME HISTORY</h3>
         <div id="betHistory">History loading...</div>
@@ -61,17 +65,41 @@
 
 <div id="adminM" class="modal"><div class="modal-content">
     <h2 style="color:var(--accent);">ADMIN PANEL</h2>
-    <div id="poolDisplay" style="background:#000; padding:15px; color:var(--green); margin-bottom:15px; font-size:18px; border-radius:10px;">
-        TOTAL BETS:<br>
-        <span style="color:var(--green);">GREEN: ₹<span id="pG">0</span></span> | 
-        <span style="color:var(--red);">RED: ₹<span id="pR">0</span></span>
+    <div id="poolDisplay" style="background:#000; padding:10px; color:var(--green); margin-bottom:15px; border-radius:10px;">
+        LIVE POOL: G: ₹<span id="pG">0</span> | R: ₹<span id="pR">0</span>
     </div>
     <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <button onclick="setManual('Green')" style="flex:1; background:var(--green); padding:12px; border-radius:8px; font-weight:bold;">WIN GREEN</button>
-        <button onclick="setManual('Red')" style="flex:1; background:var(--red); padding:12px; border-radius:8px; font-weight:bold; color:#fff;">WIN RED</button>
+        <button onclick="setManual('Green')" style="flex:1; background:var(--green); padding:10px; border-radius:8px; font-weight:bold;">WIN G</button>
+        <button onclick="setManual('Red')" style="flex:1; background:var(--red); padding:10px; border-radius:8px; font-weight:bold; color:#fff;">WIN R</button>
     </div>
-    <div id="adminReqsBody" style="max-height:200px; overflow-y:auto;"></div>
+    <h4 style="text-align:left; margin-bottom:5px;">PENDING REQUESTS</h4>
+    <div style="overflow-x:auto; background:#0c0f26; border-radius:10px;">
+        <table>
+            <thead><tr><th>User</th><th>Amt</th><th>Info</th><th>Action</th></tr></thead>
+            <tbody id="adminReqsBody"></tbody>
+        </table>
+    </div>
     <button onclick="closeM('adminM')" style="width:100%; margin-top:20px; padding:12px; background:#444; color:#fff; border:none; border-radius:10px;">CLOSE</button>
+</div></div>
+
+<div id="depM" class="modal"><div class="modal-content">
+    <h3>DEPOSIT FUNDS</h3>
+    <input type="number" id="dAmt" placeholder="Amount (Min 100)" oninput="drawQR()">
+    <div id="qrBox" style="display:none; margin:15px 0; background:#fff; padding:10px; border-radius:10px;">
+        <img id="qr" style="width:180px;">
+        <p style="font-size:10px; margin-top:5px; color:#000; font-weight:bold;">UPI: poonamlondhe52-1@okhdfcbank</p>
+    </div>
+    <input type="text" id="dUTR" placeholder="12 Digit UTR Number">
+    <button onclick="sendDep()" style="width:100%; background:var(--green); padding:15px; border:none; border-radius:12px; font-weight:900;">SUBMIT DEPOSIT</button>
+    <p onclick="closeM('depM')" style="color:var(--red); cursor:pointer; margin-top:15px;">Cancel</p>
+</div></div>
+
+<div id="witM" class="modal"><div class="modal-content">
+    <h3>WITHDRAW FUNDS</h3>
+    <input type="number" id="wAmt" placeholder="Amount (Min 200)">
+    <input type="text" id="wUpi" placeholder="Enter Your UPI ID">
+    <button onclick="sendWit()" style="width:100%; background:var(--red); padding:15px; border:none; border-radius:12px; color:#fff; font-weight:900;">SUBMIT WITHDRAWAL</button>
+    <p onclick="closeM('witM')" style="color:var(--red); cursor:pointer; margin-top:15px;">Cancel</p>
 </div></div>
 
 <div id="resultM" class="modal"><div class="modal-content">
@@ -101,9 +129,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uid = localStorage.getItem('CLUB_USER_ID_v102') || ("ID"+Math.floor(1000+Math.random()*8999));
-    localStorage.setItem('CLUB_USER_ID_v102', uid);
-    let bal = 0, currentBetCol = '', lastPeriod = 0;
+    let uid = localStorage.getItem('CLUB_USER_ID_v105') || ("ID"+Math.floor(1000+Math.random()*8999));
+    localStorage.setItem('CLUB_USER_ID_v105', uid);
+    let bal = 0, currentBetCol = '', lastProcessed = 0;
 
     db.ref('users/' + uid).on('value', s => {
         let d = s.val(); if(!d) db.ref('users/'+uid).set({balance:0, id:uid});
@@ -113,34 +141,20 @@
     });
 
     setInterval(() => {
-        let now = Date.now();
-        let s = 60 - Math.floor((now / 1000) % 60);
-        let p = Math.floor(now / 60000);
+        let n = Date.now(), s = 60 - Math.floor((n / 1000) % 60), p = Math.floor(n / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
         document.getElementById('period').innerText = p;
-
-        if (s === 1 && lastPeriod !== p) {
-            lastPeriod = p;
-            calculateWinner(p);
-        }
+        if(s === 1 && lastProcessed !== p) { lastProcessed = p; runGameLogic(p); }
     }, 1000);
 
-    function calculateWinner(p) {
+    function runGameLogic(p) {
         db.ref('global_result/' + p).transaction(curr => {
             if (curr === null) {
                 db.ref('admin/manual').once('value', ms => {
                     db.ref('active_bets/' + p).once('value', snap => {
-                        let totalPool = { Green: 0, Red: 0 };
-                        // Loop through all users and all bets to get TRUE TOTAL
-                        snap.forEach(userNode => {
-                            userNode.forEach(betNode => {
-                                let b = betNode.val();
-                                totalPool[b.color] += parseFloat(b.amount);
-                            });
-                        });
-                        
-                        let win = ms.val() || (totalPool.Green <= totalPool.Red ? 'Green' : 'Red');
-                        
+                        let pool = { Green: 0, Red: 0 };
+                        snap.forEach(u => u.forEach(b => pool[b.val().color] += parseFloat(b.val().amount)));
+                        let win = ms.val() || (pool.Green <= pool.Red ? 'Green' : 'Red');
                         db.ref('global_result/' + p).set({ win: win });
                         db.ref('trends').push({ color: win === 'Red' ? '#ff5252' : '#00e676' });
                         db.ref('admin/manual').set(null);
@@ -154,11 +168,11 @@
         let p = snap.key, win = snap.val().win;
         db.ref('active_bets/'+p+'/'+uid).once('value', s => {
             if(s.exists()) {
-                let totalWinAmt = 0;
-                s.forEach(b => { if(b.val().color === win) totalWinAmt += (b.val().amount * 1.9); });
-                if(totalWinAmt > 0) db.ref('users/'+uid+'/balance').transaction(c => (c||0) + totalWinAmt);
-                db.ref('history/'+uid+'/'+p).update({ status: totalWinAmt > 0 ? 'Win' : 'Loss', res: win });
-                showFinalPopup(totalWinAmt > 0 ? 'Win' : 'Loss', totalWinAmt, win);
+                let wAmt = 0;
+                s.forEach(b => { if(b.val().color === win) wAmt += (b.val().amount * 1.9); });
+                if(wAmt > 0) db.ref('users/'+uid+'/balance').transaction(c => (c||0) + wAmt);
+                db.ref('history/'+uid+'/'+p).update({ status: wAmt > 0 ? 'Win' : 'Loss', res: win });
+                showFinalPopup(wAmt > 0 ? 'Win' : 'Loss', wAmt, win);
             }
         });
     });
@@ -172,53 +186,79 @@
         openM('resultM');
     }
 
+    // DEPOSIT & WITHDRAWAL
+    function drawQR() {
+        let a = document.getElementById('dAmt').value;
+        if(a >= 100) {
+            document.getElementById('qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}%26cu=INR`;
+            document.getElementById('qrBox').style.display = 'block';
+        } else document.getElementById('qrBox').style.display = 'none';
+    }
+    function sendDep() {
+        let a = document.getElementById('dAmt').value, u = document.getElementById('dUTR').value;
+        if(a >= 100 && u.length >= 10) {
+            db.ref('requests').push({ uid, amt: a, info: u, type: 'Deposit' });
+            alert("Request Sent!"); closeM('depM');
+        } else alert("Invalid Input!");
+    }
+    function sendWit() {
+        let a = document.getElementById('wAmt').value, u = document.getElementById('wUpi').value;
+        if(a >= 200 && bal >= a) {
+            db.ref('users/'+uid).update({ balance: bal - a });
+            db.ref('requests').push({ uid, amt: a, info: u, type: 'Withdraw' });
+            alert("Withdraw Request Sent!"); closeM('witM');
+        } else alert("Low Balance!");
+    }
+
+    // ADMIN FUNCTIONS
+    function adminGo() { if(prompt("Pass:") === "77759636477") { openM('adminM'); loadAdminData(); } }
+    function loadAdminData() {
+        // Pool Track
+        let p = document.getElementById('period').innerText;
+        db.ref('active_bets/'+p).on('value', s => {
+            let g = 0, r = 0;
+            s.forEach(u => u.forEach(b => { if(b.val().color==='Green') g += parseFloat(b.val().amount); else r += parseFloat(b.val().amount); }));
+            document.getElementById('pG').innerText = g; document.getElementById('pR').innerText = r;
+        });
+        // Request Load
+        db.ref('requests').on('value', snap => {
+            let html = "";
+            snap.forEach(r => {
+                let d = r.val();
+                html += `<tr><td>${d.uid}</td><td>₹${d.amt}</td><td>${d.info}</td>
+                <td><button class="appr-btn" onclick="apprReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">✔</button>
+                <button class="rejt-btn" onclick="rejReq('${r.key}')">✖</button></td></tr>`;
+            });
+            document.getElementById('adminReqsBody').innerHTML = html || "<tr><td colspan='4'>No Pending</td></tr>";
+        });
+    }
+    function apprReq(k, u, a, t) { if(t === 'Deposit') db.ref('users/'+u+'/balance').transaction(c => (c||0) + parseFloat(a)); db.ref('requests/'+k).remove(); }
+    function rejReq(k) { db.ref('requests/'+k).remove(); }
+    function setManual(c) { db.ref('admin/manual').set(c); alert("Next Fix: " + c); }
+
+    // UTILS
     function openBet(c) { currentBetCol = c; document.getElementById('selColor').innerText = "Join " + c; openM('betM'); }
     function confirmBet() {
-        let a = parseFloat(document.getElementById('betAmt').value);
-        let p = document.getElementById('period').innerText;
+        let a = parseFloat(document.getElementById('betAmt').value), p = document.getElementById('period').innerText;
         if(a >= 10 && bal >= a) {
             db.ref('users/'+uid).update({ balance: bal - a });
             db.ref('active_bets/'+p+'/'+uid).push({ color: currentBetCol, amount: a });
             db.ref('history/'+uid+'/'+p).set({ bet: currentBetCol, status: 'Pending', amount: a });
             closeM('betM');
-        } else alert("Low Balance!");
+        } else alert("Balance Low!");
     }
-
-    // ADMIN: Real-time Total Pool Tracker
-    function adminGo() { if(prompt("Pass:") === "77759636477") { openM('adminM'); trackLivePool(); } }
-    
-    function trackLivePool() {
-        let p = document.getElementById('period').innerText;
-        db.ref('active_bets/'+p).on('value', s => {
-            let totalG = 0, totalR = 0;
-            s.forEach(userNode => {
-                userNode.forEach(betNode => {
-                    let b = betNode.val();
-                    if(b.color === 'Green') totalG += parseFloat(b.amount);
-                    else totalR += parseFloat(b.amount);
-                });
-            });
-            document.getElementById('pG').innerText = totalG.toFixed(2);
-            document.getElementById('pR').innerText = totalR.toFixed(2);
-        });
-    }
-
-    function setManual(c) { db.ref('admin/manual').set(c); alert("Next Win Fixed: " + c); }
-
     db.ref('history/'+uid).limitToLast(10).on('value', s => {
         let h = "<table><tr><th>Period</th><th>Bet</th><th>Res</th><th>Status</th></tr>";
         s.forEach(x => { let v = x.val(); h += `<tr><td>${x.key}</td><td>${v.bet}</td><td>${v.res||'-'}</td><td style="color:${v.status=='Win'?'#00e676':'#ff5252'}">${v.status}</td></tr>`; });
         document.getElementById('betHistory').innerHTML = h + "</table>";
     });
-
     db.ref('trends').limitToLast(15).on('value', s => {
         let d = document.getElementById('trends'); d.innerHTML = "";
         s.forEach(x => { d.innerHTML += `<div class="trend-dot" style="background:${x.val().color}"></div>`; });
     });
-
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
+    function copyReferral() { navigator.clipboard.writeText(window.location.href); alert("Referral Link Copied!"); }
 </script>
 </body>
 </html>
-
