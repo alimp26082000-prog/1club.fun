@@ -9,27 +9,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #fb5153; --bg: #f5f6fa; --green: #2ecc71; --red: #e74c3c; --violet: #9b59b6; --gold: #fbc531; --orange: #ffa502; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; user-select: none; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; user-select: none; padding-bottom: 50px; }
         .header { background: var(--primary); padding: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
         .wallet-box { background: #fff; margin: 15px; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .bal-amt { font-size: 30px; font-weight: 800; margin: 10px 0; cursor: pointer; }
+        .bal-amt { font-size: 30px; font-weight: 800; margin: 10px 0; cursor: pointer; color: #333; }
         .game-area { background: #fff; margin: 15px; border-radius: 20px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .timer-box { display: flex; justify-content: space-between; background: #fff5f5; padding: 10px; border-radius: 12px; margin-bottom: 20px; }
         .grid-btn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .btn { border: none; padding: 12px; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
-        
-        /* Fixed Number Grid (0-9) */
-        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .btn { border: none; padding: 12px; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
         .n-btn { border: 2px solid #ddd; background: #fff; padding: 10px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 16px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; margin: auto; }
-        .bs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .bs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .invite-card { background: var(--gold); padding: 15px; border-radius: 15px; margin: 15px; text-align: center; font-weight: 800; cursor: pointer; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        /* Modals & Popups */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000; align-items: center; justify-content: center; }
-        .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 90%; max-height: 85vh; overflow-y: auto; text-align: center; }
-        .bet-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 25px 25px 0 0; z-index: 6000; display: none; flex-direction: column; }
+        /* Modals Fix */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; }
+        .bet-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 25px 25px 0 0; z-index: 9999; display: none; flex-direction: column; box-shadow: 0 -5px 15px rgba(0,0,0,0.2); }
         
         table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: center; }
+        .win-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; }
+        .win-card { background: linear-gradient(180deg, #ff4757, #ff6b81); width: 80%; padding: 25px; border-radius: 20px; text-align: center; color: white; }
     </style>
 </head>
 <body>
@@ -55,37 +56,49 @@
         <button class="btn" style="background:var(--violet)" onclick="betPopup('Violet')">Violet</button>
         <button class="btn" style="background:var(--red)" onclick="betPopup('Red')">Red</button>
     </div>
-    <div class="num-grid">
-        <button class="n-btn" style="color:var(--violet)" onclick="betPopup('0')">0</button>
-        <button class="n-btn" style="color:var(--green)" onclick="betPopup('1')">1</button>
-        <button class="n-btn" style="color:var(--red)" onclick="betPopup('2')">2</button>
-        <button class="n-btn" style="color:var(--green)" onclick="betPopup('3')">3</button>
-        <button class="n-btn" style="color:var(--red)" onclick="betPopup('4')">4</button>
-        <button class="n-btn" style="color:var(--violet)" onclick="betPopup('5')">5</button>
-        <button class="n-btn" style="color:var(--red)" onclick="betPopup('6')">6</button>
-        <button class="n-btn" style="color:var(--green)" onclick="betPopup('7')">7</button>
-        <button class="n-btn" style="color:var(--red)" onclick="betPopup('8')">8</button>
-        <button class="n-btn" style="color:var(--green)" onclick="betPopup('9')">9</button>
+    <div class="num-grid" id="nums"></div>
+    <div class="bs-grid">
+        <button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button>
+        <button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button>
     </div>
-    <div class="bs-grid"><button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button><button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button></div>
 </div>
 
+<div class="invite-card" onclick="copyInvite()">🎁 INVITE FRIENDS (GET 10% BONUS)</div>
+
 <div class="game-area">
-    <h4 style="margin:0;">Game History</h4>
     <table id="resTable"><tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr></table>
 </div>
 
+<div id="depM" class="modal"><div class="modal-content">
+    <h3>Deposit</h3>
+    <input type="number" id="dAmt" placeholder="Amount" style="width:90%; padding:10px; margin-bottom:10px;">
+    <button onclick="genQR()" style="width:100%; background:var(--green); color:white; border:none; padding:12px; border-radius:8px;">Show QR</button>
+    <div id="qrBox" style="display:none; margin:10px 0;"><img id="qrImg" style="width:150px;"><br><small>UPI: poonamlondhe52-1@okhdfcbank</small></div>
+    <input type="text" id="dUTR" placeholder="12 Digit UTR" style="width:90%; padding:10px; margin:10px 0;">
+    <button onclick="sendDep()" style="width:100%; background:var(--primary); color:white; border:none; padding:12px; border-radius:8px;">Submit</button>
+    <p onclick="closeM('depM')" style="color:red; cursor:pointer; margin-top:10px;">Close</p>
+</div></div>
+
+<div id="witM" class="modal"><div class="modal-content">
+    <h3>Withdrawal</h3>
+    <input type="number" id="wAmt" placeholder="Min ₹200" style="width:90%; padding:10px; margin-bottom:10px;">
+    <input type="text" id="wUpi" placeholder="UPI ID" style="width:90%; padding:10px; margin-bottom:10px;">
+    <button onclick="sendWit()" style="width:100%; background:var(--primary); color:white; border:none; padding:12px; border-radius:8px;">Submit</button>
+    <p onclick="closeM('witM')" style="color:red; cursor:pointer; margin-top:10px;">Close</p>
+</div></div>
+
+<div id="adminM" class="modal"><div class="modal-content">
+    <h3>Admin Control</h3>
+    <div id="adminData">Loading...</div>
+    <button onclick="closeM('adminM')" style="margin-top:20px;">Close</button>
+</div></div>
+
 <div id="betSheet" class="bet-sheet">
-    <div style="background:var(--orange); padding:15px; color:white; font-weight:bold; border-radius:25px 25px 0 0;" id="betTitle">Select Option</div>
+    <div style="background:var(--orange); padding:15px; color:#fff; font-weight:bold; border-radius:25px 25px 0 0;" id="betTitle">Bet</div>
     <div style="padding:20px;">
-        <input type="number" id="manualAmt" placeholder="Type Amount" style="width:100%; padding:10px; margin-bottom:15px; text-align:center; border:1px solid #ddd; border-radius:8px;">
-        <div style="display:flex; justify-content:space-around; margin-bottom:20px;">
-            <button onclick="setX(1)" class="btn" style="background:#eee; color:#000;">X1</button>
-            <button onclick="setX(5)" class="btn" style="background:#eee; color:#000;">X5</button>
-            <button onclick="setX(10)" class="btn" style="background:#eee; color:#000;">X10</button>
-        </div>
-        <button onclick="confirmBet()" style="width:100%; background:var(--orange); color:#fff; border:none; padding:15px; font-weight:bold; border-radius:10px;">Confirm Bet</button>
-        <button onclick="closeM('betSheet')" style="width:100%; background:#f5f5f5; border:none; padding:10px; margin-top:10px;">Cancel</button>
+        <input type="number" id="manualAmt" placeholder="Type Amount" style="width:100%; padding:10px; margin-bottom:15px; text-align:center;">
+        <button onclick="confirmBet()" style="width:100%; background:var(--orange); color:white; border:none; padding:15px; font-weight:bold; border-radius:10px;">Confirm</button>
+        <button onclick="document.getElementById('betSheet').style.display='none'" style="width:100%; background:#eee; border:none; padding:10px; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
@@ -96,56 +109,75 @@
 
     let uid = localStorage.getItem('1CLUB_UID_FINAL') || "U"+Math.floor(1000+Math.random()*9000);
     localStorage.setItem('1CLUB_UID_FINAL', uid);
-    let bal = 0, lastP = 0, selType = '', multiplier = 1;
+    let bal = 0, lastP = 0, selType = '';
 
     db.ref('users/'+uid).on('value', s => { bal = (s.val() && s.val().balance) || 0; document.getElementById('uBal').innerText = bal.toFixed(2); document.getElementById('uID').innerText = "ID: "+uid; });
 
-    // Sync Timer across all IDs
+    // 0-9 Numbers Render
+    let numGrid = "";
+    for(let i=0; i<=9; i++) {
+        let col = (i%2==0)?'var(--red)':'var(--green)'; if(i==0||i==5) col='var(--violet)';
+        numGrid += `<button class="n-btn" style="color:${col}; border-color:${col}" onclick="betPopup('${i}')">${i}</button>`;
+    }
+    document.getElementById('nums').innerHTML = numGrid;
+
+    // Timer & Game Sync
     setInterval(() => {
         let now = Date.now(), s = 60 - Math.floor((now / 1000) % 60), p = Math.floor(now / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
         document.getElementById('period').innerText = p;
-        if(s === 1 && lastP !== p) { lastP = p; checkAndGenerateResult(p); }
+        if(s === 1 && lastP !== p) { lastP = p; runGameLogic(p); }
     }, 1000);
 
-    function checkAndGenerateResult(p) {
+    function runGameLogic(p) {
         db.ref('global_res/'+p).once('value', s => {
             if(!s.exists()) {
-                db.ref('admin/manual').once('value', m => {
-                    db.ref('bets/'+p).once('value', b => {
-                        let pool = { Green:0, Red:0, Big:0, Small:0 };
-                        b.forEach(u => u.forEach(x => pool[x.val().type] += x.val().amt));
-                        let win = m.val() || Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
-                        let num = (win=='Green')?3:(win=='Red')?4:(win=='Big')?8:1;
-                        db.ref('global_res/'+p).set({ win, num, time: Date.now() });
-                        db.ref('admin/manual').set(null);
-                    });
+                db.ref('bets/'+p).once('value', b => {
+                    let pool = { Green:0, Red:0, Big:0, Small:0 };
+                    b.forEach(u => u.forEach(x => pool[x.val().type] += x.val().amt));
+                    let win = Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
+                    db.ref('global_res/'+p).set({ win, num: Math.floor(Math.random()*10), time: Date.now() });
                 });
             }
         });
     }
 
-    // Fixed History: Show 20 results, latest on top
+    // History Table (20 results)
     db.ref('global_res').limitToLast(20).on('value', s => {
         let h = "<tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr>";
         let arr = []; s.forEach(x => arr.push({p:x.key, ...x.val()}));
         arr.reverse().forEach(d => {
-            let color = (d.num==0 || d.num==5)?'#9b59b6':(d.num%2==0?'red':'green');
-            h += `<tr><td>${d.p}</td><td>${d.num}</td><td>${d.num>=5?'Big':'Small'}</td><td style="color:${color}">${d.win || (d.num%2==0?'Red':'Green')}</td></tr>`;
+            h += `<tr><td>${d.p}</td><td>${d.num}</td><td>${d.num>=5?'Big':'Small'}</td><td>${d.win}</td></tr>`;
         });
         document.getElementById('resTable').innerHTML = h;
     });
 
-    function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Betting: " + t; document.getElementById('betSheet').style.display = 'flex'; }
-    function setX(x) { multiplier = x; }
+    function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Bet: "+t; document.getElementById('betSheet').style.display='flex'; }
     function confirmBet() {
-        let a = parseFloat(document.getElementById('manualAmt').value || 10) * multiplier;
-        if(bal >= a) { db.ref('users/'+uid).update({balance: bal-a}); db.ref('bets/'+document.getElementById('period').innerText+'/'+uid).push({type:selType, amt:a}); document.getElementById('betSheet').style.display='none'; }
-        else alert("Low balance!");
+        let a = parseFloat(document.getElementById('manualAmt').value);
+        if(bal >= a && a > 0) {
+            db.ref('users/'+uid).update({balance: bal-a});
+            db.ref('bets/'+document.getElementById('period').innerText+'/'+uid).push({type:selType, amt:a});
+            document.getElementById('betSheet').style.display='none';
+        } else alert("Invalid Amount!");
     }
-    function checkAdmin() { if(prompt("Pass:")=="77759636477") { /* Admin logic remains same */ } }
+
+    function checkAdmin() { if(prompt("Admin Pass:")=="77759636477") { openM('adminM'); loadAdmin(); } }
+    function loadAdmin() {
+        db.ref('requests').on('value', s => {
+            let h = "<table>";
+            s.forEach(r => { let d = r.val(); h += `<tr><td>${d.uid}</td><td>${d.amt}</td><td><button onclick="appr('${r.key}','${d.uid}',${d.amt})">✔</button></td></tr>`; });
+            document.getElementById('adminData').innerHTML = h + "</table>";
+        });
+    }
+    function appr(k,u,a) { db.ref('users/'+u+'/balance').transaction(c=>(c||0)+a); db.ref('requests/'+k).remove(); }
+
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
+    function genQR() { document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${document.getElementById('dAmt').value}`; document.getElementById('qrBox').style.display='block'; }
+    function sendDep() { db.ref('requests').push({uid, amt:document.getElementById('dAmt').value, type:'Dep'}); alert("Submitted!"); closeM('depM'); }
+    function sendWit() { let a = document.getElementById('wAmt').value; if(bal>=a) { db.ref('users/'+uid).update({balance:bal-a}); db.ref('requests').push({uid, amt:a, type:'Wit'}); alert("Sent!"); closeM('witM'); } }
+    function copyInvite() { navigator.clipboard.writeText(window.location.href+"?ref="+uid); alert("Link Copied!"); }
 </script>
 </body>
 </html>
