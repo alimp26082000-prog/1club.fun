@@ -12,7 +12,6 @@
 
 <style>
 :root { --primary:#fb5153; --bg:#f5f6fa; --green:#2ecc71; --red:#e74c3c; --violet:#9b59b6; --gold:#fbc531; --orange:#ffa502; }
-
 body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:30px;}
 .header{background:var(--primary);padding:15px;color:#fff;display:flex;justify-content:space-between;font-weight:800}
 .wallet-box{background:#fff;margin:15px;border-radius:20px;padding:20px;text-align:center}
@@ -28,20 +27,6 @@ table{width:100%;font-size:12px;border-collapse:collapse;margin-top:10px}
 th,td{border-bottom:1px solid #eee;padding:8px;text-align:center}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:5000;align-items:center;justify-content:center}
 .modal-content{background:#fff;padding:20px;border-radius:15px;width:90%;max-height:80vh;overflow-y:auto}
-
-/* Stylish Popup Design */
-.result-popup {
-    text-align: center;
-    padding: 20px;
-    border-radius: 20px;
-    color: white;
-    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.win-bg { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-.loss-bg { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-.res-title { font-size: 24px; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; }
-.res-amount { font-size: 32px; font-weight: 800; margin: 10px 0; }
-@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 </head>
 
@@ -62,12 +47,15 @@ th,td{border-bottom:1px solid #eee;padding:8px;text-align:center}
 <div><small style="color:red;">Period</small><br><b id="period">---</b></div>
 <div style="text-align:right;"><small>Time</small><br><b id="timer">00:60</b></div>
 </div>
+
 <div class="grid-btn">
 <button class="btn" style="background:var(--green)" onclick="betPopup('Green')">Green</button>
 <button class="btn" style="background:var(--violet)" onclick="betPopup('Violet')">Violet</button>
 <button class="btn" style="background:var(--red)" onclick="betPopup('Red')">Red</button>
 </div>
+
 <div id="nums" class="num-grid"></div>
+
 <div class="bs-grid">
 <button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button>
 <button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button>
@@ -76,21 +64,14 @@ th,td{border-bottom:1px solid #eee;padding:8px;text-align:center}
 
 <div class="game-area">
 <h4>History (Last 20 Results)</h4>
-<table id="resTable"></table>
-</div>
-
-<div id="resModal" class="modal">
-    <div id="resBox" class="modal-content result-popup">
-        <div id="resStatus" class="res-title">Winning</div>
-        <div id="resMsg">Congratulations!</div>
-        <div id="resAmt" class="res-amount">+₹0.00</div>
-        <button class="btn" style="background:#fff; color:#333; width:100%" onclick="closeM('resModal')">Close</button>
-    </div>
+<table id="resTable">
+</table>
 </div>
 
 <div id="adminM" class="modal">
 <div class="modal-content">
 <h3>ADMIN CONTROL</h3>
+<h4>Requests</h4>
 <div id="adminReqs"></div>
 <button onclick="closeM('adminM')">Close</button>
 </div>
@@ -116,45 +97,37 @@ document.getElementById('uBal').innerText=bal.toFixed(2);
 document.getElementById('uID').innerText="ID: "+uid;
 });
 
-// FIXED: History Last 20 with Correct Order
-db.ref('global_res').limitToLast(20).on('value', snap => {
+// History Logic: Last 20 Results Fix
+db.ref('global_res').orderByKey().limitToLast(20).on('value', snap => {
     let h = `<tr><th>Period</th><th>Number</th><th>Colour</th><th>Size</th></tr>`;
-    let rows = [];
-    snap.forEach(c => { rows.push({ p: c.key, ...c.val() }); });
-    rows.reverse(); // Latest at Top
-    rows.forEach(d => {
-        h += `<tr><td>${d.p}</td><td>${d.num}</td><td style="color:var(--${d.win.toLowerCase()})">${d.win}</td><td>${d.size}</td></tr>`;
+    let dataArr = [];
+    snap.forEach(child => {
+        dataArr.push({ p: child.key, ...child.val() });
+    });
+    dataArr.reverse(); // Latest result at the top
+    dataArr.forEach(d => {
+        let colorStyle = d.win ? d.win.toLowerCase() : 'black';
+        h += `<tr>
+                <td>${d.p}</td>
+                <td>${d.num}</td>
+                <td style="color:var(--${colorStyle})">${d.win}</td>
+                <td>${d.size}</td>
+              </tr>`;
     });
     document.getElementById('resTable').innerHTML = h;
 });
 
-// LOGIC: Low Bet Amount Wins
-function getWinningResult(bets) {
-    let bigAmt = bets.big || 0;
-    let smallAmt = bets.small || 0;
-    if (bigAmt < smallAmt) {
-        return { size: "Big", num: 6 }; // Example Big number
-    } else {
-        return { size: "Small", num: 2 }; // Example Small number
-    }
-}
-
-// STYLISH POPUP TRIGGER
-function showResult(isWin, amount) {
-    const box = document.getElementById('resBox');
-    const status = document.getElementById('resStatus');
-    const amtText = document.getElementById('resAmt');
+// Winning Logic Function (Low Amount Wins)
+function calculateWinner(bets) {
+    let totalBig = bets.big || 0;
+    let totalSmall = bets.small || 0;
     
-    if(isWin) {
-        box.className = "modal-content result-popup win-bg";
-        status.innerText = "WINNING";
-        amtText.innerText = "+₹" + amount;
+    // Jis par kam paise wo winner
+    if (totalBig < totalSmall) {
+        return { size: "Big", num: Math.floor(Math.random() * 5) + 5 }; // 5-9 are Big
     } else {
-        box.className = "modal-content result-popup loss-bg";
-        status.innerText = "LOSS";
-        amtText.innerText = "-₹" + amount;
+        return { size: "Small", num: Math.floor(Math.random() * 5) }; // 0-4 are Small
     }
-    openM('resModal');
 }
 
 let nH="";
@@ -165,23 +138,37 @@ for(let i=0;i<=9;i++){
 }
 document.getElementById('nums').innerHTML=nH;
 
-function checkAdmin(){ if(prompt("Admin Password")=="77759636477"){ openM('adminM'); loadAdmin(); } }
+function checkAdmin(){
+    if(prompt("Admin Password")=="77759636477"){
+        openM('adminM');
+        loadAdmin();
+    }
+}
+
 function loadAdmin(){
     db.ref('requests').on('value',snap=>{
         let h="<table>";
         snap.forEach(r=>{
             let d=r.val();
             h+=`<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.type}</td>
-                <td><button onclick="approveReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">Approve</button></td></tr>`;
+                <td><button onclick="approveReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">Approve</button>
+                <button onclick="rejectReq('${r.key}')">Reject</button></td></tr>`;
         });
         h+="</table>";
         document.getElementById('adminReqs').innerHTML=h;
     });
 }
-function approveReq(k,u,a,t){ if(t=="Deposit"){ db.ref('users/'+u+'/balance').transaction(c=>(c||0)+parseFloat(a)); } db.ref('requests/'+k).remove(); }
+
+function approveReq(k,u,a,t){
+    if(t=="Deposit"){ db.ref('users/'+u+'/balance').transaction(c=>(c||0)+parseFloat(a)); }
+    db.ref('requests/'+k).remove();
+}
+
+function rejectReq(k){ db.ref('requests/'+k).remove(); }
 function betPopup(t){ alert("Bet: "+t); }
 function openM(id){ document.getElementById(id).style.display="flex"; }
 function closeM(id){ document.getElementById(id).style.display="none"; }
+
 </script>
 </body>
 </html>
