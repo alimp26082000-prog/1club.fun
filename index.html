@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #fb5153; --bg: #f5f6fa; --green: #2ecc71; --red: #e74c3c; --violet: #9b59b6; --gold: #fbc531; }
+        :root { --primary: #fb5153; --bg: #f5f6fa; --green: #2ecc71; --red: #e74c3c; --violet: #9b59b6; --gold: #fbc531; --orange: #ffa502; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; user-select: none; }
         .header { background: var(--primary); padding: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
         .wallet-box { background: #fff; margin: 15px; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -21,24 +21,36 @@
         .n-btn { border: 2px solid #ddd; background: #fff; padding: 10px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 16px; }
         .bs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         
-        /* Invite Section Style */
-        .invite-card { background: var(--gold); padding: 15px; border-radius: 15px; margin: 15px; text-align: center; font-weight: 800; cursor: pointer; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* Modal General */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 95%; max-height: 85vh; overflow-y: auto; text-align: center; }
 
-        /* Premium Stylish Popup */
+        /* Professional Deposit Section Style */
+        .dep-header { font-weight: bold; margin-bottom: 15px; font-size: 18px; text-align: left; }
+        .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .amt-btn { border: 1px solid #ddd; background: #fff; padding: 10px; border-radius: 5px; cursor: pointer; color: #ff4757; }
+        .amt-btn.active { border-color: var(--primary); background: #fff0f0; }
+        .edit-amt-box { display: flex; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .edit-amt-box input { border: none; background: transparent; width: 100%; outline: none; font-size: 16px; margin-left: 10px; }
+
+        /* Stylish Bet Popup Style */
+        .bet-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 25px 25px 0 0; z-index: 1500; display: none; flex-direction: column; transition: 0.3s; }
+        .bet-head { background: var(--orange); padding: 10px; color: #fff; border-radius: 25px 25px 0 0; font-weight: bold; }
+        .bet-body { padding: 20px; }
+        .bet-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .multi-btns { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+        .m-btn { border: none; background: #eee; padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .m-btn.active { background: var(--orange); color: #fff; }
+        .qty-box { display: flex; align-items: center; gap: 10px; }
+        .q-btn { background: #ddd; border: none; width: 30px; height: 30px; border-radius: 4px; font-weight: bold; }
+        .total-confirm { background: var(--orange); color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; }
+
+        /* Other Styles */
         .win-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .win-card { background: linear-gradient(180deg, #ff4757, #ff6b81); width: 85%; max-width: 350px; border-radius: 30px; padding: 30px 15px; text-align: center; color: white; position: relative; animation: pop 0.4s ease; }
         .win-card.green-bg { background: linear-gradient(180deg, #2ecc71, #27ae60); }
-        .win-icon { font-size: 50px; margin-bottom: 10px; }
-        .win-amt-big { font-size: 35px; font-weight: 900; margin: 10px 0; }
-        @keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
-
-        /* Admin & History */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 95%; max-height: 85vh; overflow-y: auto; text-align: center; }
         table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: center; }
-        .approve-btn { background: var(--green); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .reject-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -71,99 +83,149 @@
     </div>
 </div>
 
-<div class="invite-card" onclick="copyInvite()">
-    🎁 INVITE FRIENDS (GET 10% BONUS)
-</div>
-
 <div class="game-area">
-    <div id="gameHistory">
-        <table id="resTable"><tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr></table>
-    </div>
+    <table id="resTable"><tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr></table>
 </div>
-
-<div id="statusPopup" class="win-modal">
-    <div id="statusCard" class="win-card">
-        <div class="win-icon">🚀</div>
-        <h2 id="statusTitle">Congratulations</h2>
-        <p id="statusDesc">Lottery results</p>
-        <div id="statusInfo" style="margin:10px 0; font-weight:bold;">Green | 3 | Small</div>
-        <div class="win-amt-big" id="statusAmt">₹0.00</div>
-        <button onclick="closeStatus()" style="background:white; color:black; border:none; padding:10px 25px; border-radius:20px; font-weight:bold;">Close</button>
-    </div>
-</div>
-
-<div id="adminM" class="modal"><div class="modal-content">
-    <h3>ADMIN DASHBOARD</h3>
-    <div id="poolInfo" style="background:#f0f0f0; padding:10px; border-radius:10px; font-size:12px; margin-bottom:15px;"></div>
-    
-    <h4>Force Result</h4>
-    <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center;">
-        <button onclick="fixRes('Green')" style="background:green; color:white; padding:10px;">G</button>
-        <button onclick="fixRes('Red')" style="background:red; color:white; padding:10px;">R</button>
-        <button onclick="fixRes('Big')" style="background:orange; color:white; padding:10px;">B</button>
-        <button onclick="fixRes('Small')" style="background:black; color:white; padding:10px;">S</button>
-    </div>
-
-    <h4 style="margin-top:20px;">Deposit Requests</h4>
-    <div id="depList"></div>
-    
-    <h4 style="margin-top:20px;">Withdrawal Requests</h4>
-    <div id="witList"></div>
-
-    <button onclick="closeM('adminM')" style="margin-top:20px; width:100%; padding:10px; background:#444; color:#fff; border:none; border-radius:8px;">Exit Admin</button>
-</div></div>
-
-<div id="betM" class="modal"><div class="modal-content">
-    <h3 id="betTitle"></h3>
-    <input type="number" id="betAmt" placeholder="Amount" value="10">
-    <button onclick="confirmBet()" style="width:100%; background:var(--green); border:none; padding:12px; color:#fff; font-weight:bold; border-radius:8px;">Confirm</button>
-    <p onclick="closeM('betM')" style="color:red; cursor:pointer;">Cancel</p>
-</div></div>
 
 <div id="depM" class="modal"><div class="modal-content">
-    <h3>Deposit</h3>
-    <input type="number" id="dAmt" placeholder="Amount" oninput="genQR()">
-    <div id="qrDisp" style="display:none; margin:10px 0;"><img id="qrImg" style="width:150px;"><br><small>UPI: poonamlondhe52-1@okhdfcbank</small></div>
-    <input type="text" id="dUTR" placeholder="12 Digit UTR">
-    <button onclick="sendDep()" style="width:100%; background:var(--green); border:none; padding:12px; color:#fff; border-radius:8px;">Submit</button>
+    <div class="dep-header">Deposit amount</div>
+    <div class="amt-grid">
+        <div class="amt-btn" onclick="setDepAmt(100)">₹ 100</div>
+        <div class="amt-btn" onclick="setDepAmt(200)">₹ 200</div>
+        <div class="amt-btn" onclick="setDepAmt(500)">₹ 500</div>
+        <div class="amt-btn" onclick="setDepAmt(1000)">₹ 1K</div>
+        <div class="amt-btn" onclick="setDepAmt(2000)">₹ 2K</div>
+        <div class="amt-btn" onclick="setDepAmt(5000)">₹ 5K</div>
+    </div>
+    <div class="edit-amt-box">
+        <span style="color:var(--primary)">₹</span>
+        <input type="number" id="dAmt" placeholder="100.00 - 50,000.00" value="100">
+    </div>
+    <div id="qrDisp" style="display:none; margin:15px 0;"><img id="qrImg" style="width:150px;"><br><small>UPI: poonamlondhe52-1@okhdfcbank</small></div>
+    <input type="text" id="dUTR" placeholder="12 Digit UTR" style="width:90%; padding:10px; margin:15px 0; border:1px solid #ddd; border-radius:5px;">
+    <button onclick="genQR()" style="width:100%; background:var(--green); color:white; border:none; padding:12px; border-radius:8px; margin-bottom:10px;">Get QR Code</button>
+    <button onclick="sendDep()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; border-radius:8px;">Submit Transaction</button>
+    <p onclick="closeM('depM')" style="color:#777; cursor:pointer; margin-top:15px;">Close</p>
+</div></div>
+
+<div id="betSheet" class="bet-sheet">
+    <div class="bet-head" id="betTitle">WinGo 30sec: Select Big</div>
+    <div class="bet-body">
+        <div class="bet-row">
+            <span>Balance</span>
+            <div class="multi-btns">
+                <button class="m-btn active" onclick="setBase(1, this)">1</button>
+                <button class="m-btn" onclick="setBase(10, this)">10</button>
+                <button class="m-btn" onclick="setBase(100, this)">100</button>
+                <button class="m-btn" onclick="setBase(1000, this)">1000</button>
+            </div>
+        </div>
+        <div class="bet-row">
+            <span>Quantity</span>
+            <div class="qty-box">
+                <button class="q-btn" onclick="adjQty(-1)">-</button>
+                <input type="number" id="betQty" value="1" readonly style="width:40px; text-align:center; border:1px solid #ddd;">
+                <button class="q-btn" onclick="adjQty(1)">+</button>
+            </div>
+        </div>
+        <div class="multi-btns" style="justify-content: center; margin-bottom: 20px;">
+            <button class="m-btn" onclick="setX(1, this)">X1</button>
+            <button class="m-btn" onclick="setX(5, this)">X5</button>
+            <button class="m-btn" onclick="setX(10, this)">X10</button>
+            <button class="m-btn" onclick="setX(20, this)">X20</button>
+            <button class="m-btn" onclick="setX(50, this)">X50</button>
+        </div>
+        <div style="display:flex;">
+            <button onclick="closeBet()" style="flex:1; background:#eee; border:none; padding:15px;">Cancel</button>
+            <button onclick="confirmBet()" class="total-confirm" style="flex:2;">Total amount ₹<span id="totalBet">1.00</span></button>
+        </div>
+    </div>
+</div>
+
+<div id="statusPopup" class="win-modal"><div id="statusCard" class="win-card">
+    <div class="win-icon">🚀</div><h2 id="statusTitle">Congratulations</h2>
+    <div class="win-amt-big" id="statusAmt">₹0.00</div>
+    <button onclick="closeStatus()" style="background:white; color:black; border:none; padding:10px 25px; border-radius:20px; font-weight:bold;">Close</button>
 </div></div>
 
 <div id="witM" class="modal"><div class="modal-content">
     <h3>Withdrawal</h3>
-    <input type="number" id="wAmt" placeholder="Min ₹200">
-    <input type="text" id="wUpi" placeholder="UPI ID">
-    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; font-weight:bold; border-radius:8px;">Submit</button>
+    <input type="number" id="wAmt" placeholder="Min ₹200" style="width:90%; padding:10px; margin-bottom:10px;">
+    <input type="text" id="wUpi" placeholder="UPI ID" style="width:90%; padding:10px; margin-bottom:10px;">
+    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; border-radius:8px;">Submit</button>
 </div></div>
 
 <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
-      authDomain: "my-colour-game-670af.firebaseapp.com",
-      databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com",
-      projectId: "my-colour-game-670af",
-    };
+    // Firebase Init
+    const firebaseConfig = { apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU", authDomain: "my-colour-game-670af.firebaseapp.com", databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com", projectId: "my-colour-game-670af" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let uid = localStorage.getItem('1CLUB_UID_FINAL') || "U"+Math.floor(1000+Math.random()*9000);
     localStorage.setItem('1CLUB_UID_FINAL', uid);
-    let bal = 0, lastP = 0;
-    
-    // 2. REFRESH FIX: Anti-Ghost Winning Logic
-    let sessionStart = Date.now(); 
+    let bal = 0, lastP = 0, sessionStart = Date.now();
+    let selType = '', baseAmt = 1, qty = 1;
 
+    // Balance Sync
     db.ref('users/'+uid).on('value', s => {
         let d = s.val() || {balance:0}; bal = d.balance;
         document.getElementById('uBal').innerText = bal.toFixed(2);
         document.getElementById('uID').innerText = "ID: "+uid;
     });
 
-    for(let i=0; i<=9; i++) {
-        let col = (i % 2 == 0) ? 'var(--red)' : 'var(--green)';
-        if(i == 0 || i == 5) col = 'var(--violet)';
-        document.getElementById('nums').innerHTML += `<button class="n-btn" onclick="betPopup('${i}')" style="color:${col}; border-color:${col};">${i}</button>`;
+    // Betting UI Functions
+    function betPopup(t) {
+        selType = t;
+        document.getElementById('betTitle').innerText = "WinGo 30sec: Select " + t;
+        document.getElementById('betSheet').style.display = 'flex';
+        updateTotal();
+    }
+    function setBase(v, btn) {
+        baseAmt = v;
+        document.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateTotal();
+    }
+    function setX(x, btn) {
+        qty = x;
+        document.getElementById('betQty').value = qty;
+        updateTotal();
+    }
+    function adjQty(v) {
+        qty = Math.max(1, qty + v);
+        document.getElementById('betQty').value = qty;
+        updateTotal();
+    }
+    function updateTotal() {
+        document.getElementById('totalBet').innerText = (baseAmt * qty).toFixed(2);
+    }
+    function closeBet() { document.getElementById('betSheet').style.display = 'none'; }
+
+    function confirmBet() {
+        let total = baseAmt * qty;
+        let p = document.getElementById('period').innerText;
+        if(bal >= total) {
+            db.ref('users/'+uid).update({balance: bal - total});
+            db.ref('bets/'+p+'/'+uid).push({type: selType, amt: total});
+            closeBet();
+        } else alert("Insufficient Balance!");
     }
 
+    // Deposit Functions
+    function setDepAmt(v) {
+        document.getElementById('dAmt').value = v;
+        document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+    function genQR() {
+        let a = document.getElementById('dAmt').value;
+        if(a >= 100){
+            document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`;
+            document.getElementById('qrDisp').style.display='block';
+        } else alert("Min deposit ₹100");
+    }
+
+    // Timer & Game Logic
     setInterval(() => {
         let now = Date.now(), s = 60 - Math.floor((now / 1000) % 60), p = Math.floor(now / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
@@ -174,107 +236,30 @@
     function processGame(p) {
         db.ref('global_res/'+p).transaction(curr => {
             if(curr === null) {
-                db.ref('admin/manual').once('value', m => {
-                    db.ref('bets/'+p).once('value', b => {
-                        let pool = { Green:0, Red:0, Violet:0, Big:0, Small:0, "0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0 };
-                        b.forEach(u => u.forEach(x => pool[x.val().type] += parseFloat(x.val().amt)));
-                        let win = m.val() || Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
-                        let nums = (win=='Green')?[1,3,7,9] : (win=='Red')?[2,4,6,8] : (win=='Big')?[5,6,7,8,9] : (win=='Small')?[0,1,2,3,4] : [0,5];
-                        let winNum = nums[Math.floor(Math.random()*nums.length)];
-                        db.ref('global_res/'+p).set({ win: win, num: winNum, time: Date.now() });
-                        db.ref('admin/manual').set(null);
-                    });
+                db.ref('bets/'+p).once('value', b => {
+                    let pool = { Green:0, Red:0, Violet:0, Big:0, Small:0 };
+                    b.forEach(u => u.forEach(x => pool[x.val().type] += parseFloat(x.val().amt)));
+                    let win = Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
+                    let nums = (win=='Green')?[1,3,7,9]:(win=='Red')?[2,4,6,8]:[0,5];
+                    db.ref('global_res/'+p).set({ win: win, num: nums[0], time: Date.now() });
                 });
             }
         });
     }
 
-    db.ref('global_res').on('child_added', snap => {
-        let p = snap.key, res = snap.val();
-        // REFRESH CHECK: Only process results after session start
-        if(!res.time || res.time < sessionStart) return;
-
-        db.ref('bets/'+p+'/'+uid).once('value', s => {
-            let totalWin = 0; let size = res.num>=5?'Big':'Small';
-            if(s.exists()){
-                s.forEach(b => {
-                    let bet = b.val();
-                    if(bet.type == res.win || bet.type == size) totalWin += bet.amt * 1.9;
-                    if(bet.type == res.num) totalWin += bet.amt * 9;
-                });
-                showStatus(totalWin > 0, totalWin, res.win, res.num, size);
-                if(totalWin > 0) db.ref('users/'+uid+'/balance').transaction(c=>(c||0)+totalWin);
-            }
-        });
-    });
-
-    function showStatus(won, amt, col, num, size) {
-        const card = document.getElementById('statusCard');
-        document.getElementById('statusTitle').innerText = won ? "Congratulations" : "HARD LUCK!";
-        document.getElementById('statusAmt').innerText = won ? "₹"+amt.toFixed(2) : "Loss";
-        document.getElementById('statusInfo').innerText = `${col} | ${num} | ${size}`;
-        card.className = won ? "win-card green-bg" : "win-card";
-        document.getElementById('statusPopup').style.display = 'flex';
-        setTimeout(closeStatus, 4000);
-    }
-
-    db.ref('global_res').limitToLast(15).on('value', s => {
+    // History & Status Popup
+    db.ref('global_res').limitToLast(10).on('value', s => {
         let h = "<tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr>";
-        let arr = []; s.forEach(x => { arr.push({p:x.key, ...x.val()}); });
+        let arr = []; s.forEach(x => arr.push({p:x.key, ...x.val()}));
         arr.reverse().forEach(d => {
-            let sz = d.num>=5?'Big':'Small';
-            h += `<tr><td>${d.p}</td><td>${d.num}</td><td>${sz}</td><td style="color:${d.win=='Red'?'red':'green'}">${d.win}</td></tr>`;
+            h += `<tr><td>${d.p}</td><td>${d.num}</td><td>${d.num>=5?'Big':'Small'}</td><td>${d.win}</td></tr>`;
         });
         document.getElementById('resTable').innerHTML = h;
     });
 
-    function checkAdmin() { let p = prompt("Admin Pass:"); if(p=="77759636477") { openM('adminM'); loadAdminData(); } }
-    
-    function loadAdminData() {
-        db.ref('requests').on('value', s => {
-            let dep = "<table><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr>";
-            let wit = "<table><tr><th>ID</th><th>Amt</th><th>UPI</th><th>Action</th></tr>";
-            s.forEach(r => {
-                let d = r.val();
-                if(d.type=='Dep') {
-                    // DEPOSIT WITH REJECT OPTION
-                    dep += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.utr}</td><td>
-                        <button class="approve-btn" onclick="appr('${r.key}','${d.uid}',${d.amt})">✔</button>
-                        <button class="reject-btn" onclick="remReq('${r.key}')">✖</button>
-                    </td></tr>`;
-                } else {
-                    wit += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.upi}</td><td>
-                        <button class="approve-btn" onclick="remReq('${r.key}')">✔ Done</button>
-                        <button class="reject-btn" onclick="remReq('${r.key}')">✖</button>
-                    </td></tr>`;
-                }
-            });
-            document.getElementById('depList').innerHTML = dep + "</table>";
-            document.getElementById('witList').innerHTML = wit + "</table>";
-        });
-    }
-    
-    function appr(k, u, a) { db.ref('users/'+u+'/balance').transaction(c=>(c||0)+a); remReq(k); }
-    function remReq(k) { db.ref('requests/'+k).remove(); }
-    function fixRes(v) { db.ref('admin/manual').set(v); alert("Fixed Next: "+v); }
-
-    function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Bet: "+t; openM('betM'); }
-    function confirmBet() {
-        let a = parseInt(document.getElementById('betAmt').value), p = document.getElementById('period').innerText;
-        if(bal >= a && a >= 10) {
-            db.ref('users/'+uid).update({balance: bal - a});
-            db.ref('bets/'+p+'/'+uid).push({type: selType, amt: a});
-            closeM('betM');
-        } else alert("Low Balance!");
-    }
-
-    function copyInvite() { navigator.clipboard.writeText(window.location.href + "?ref=" + uid); alert("Link Copied!"); }
-    function genQR() { let a = document.getElementById('dAmt').value; if(a>=100){ document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`; document.getElementById('qrDisp').style.display='block'; } }
-    function sendDep() { db.ref('requests').push({uid, amt: parseInt(document.getElementById('dAmt').value), utr: document.getElementById('dUTR').value, type:'Dep'}); closeM('depM'); alert("Sent!"); }
-    function sendWit() { let a = parseInt(document.getElementById('wAmt').value); if(bal>=a && a>=200){ db.ref('users/'+uid).update({balance: bal-a}); db.ref('requests').push({uid, amt: a, upi: document.getElementById('wUpi').value, type:'Wit'}); closeM('witM'); alert("Sent!"); } }
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
-    function closeStatus() { document.getElementById('statusPopup').style.display = 'none'; }
+    function sendDep() { alert("Request Submitted!"); closeM('depM'); }
 </script>
 </body>
 </html>
