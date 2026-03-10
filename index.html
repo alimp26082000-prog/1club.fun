@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1CLUB PRO - Official</title>
+    <title>1CLUB PRO</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -46,7 +46,7 @@
 </div>
 
 <div class="game-area">
-    <h4>Game History (Last 20 Results)</h4>
+    <h4>History (Last 20)</h4>
     <table id="resTable"><tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr></table>
 </div>
 
@@ -55,7 +55,7 @@
     <input type="text" id="wUpi" placeholder="Enter UPI ID" style="width:90%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
     <input type="number" id="wAmt" placeholder="Enter Amount" style="width:90%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px;">
     <button onclick="sendWit()" style="width:100%; background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold;">Withdraw Now</button>
-    <p onclick="closeM('witM')" style="color:red; cursor:pointer; margin-top:15px;">Cancel</p>
+    <p onclick="closeM('witM')" style="color:red; cursor:pointer; margin-top:10px;">Cancel</p>
 </div></div>
 
 <div id="depM" class="modal"><div class="modal-content"><h3>Deposit</h3><input type="number" id="dAmt" placeholder="Amount" style="width:90%; padding:10px;"><button onclick="alert('Submit UTR')" style="width:100%; margin-top:10px; background:var(--green); color:white; border:none; padding:12px;">Next</button><p onclick="closeM('depM')" style="color:red; cursor:pointer;">Close</p></div></div>
@@ -69,21 +69,21 @@
     localStorage.setItem('1CLUB_UID_FINAL', uid);
     let bal = 0, lastP = 0, serverOffset = 0;
 
-    // Firebase Server Time Offset Calculation
+    // Fixed Sync Logic
     db.ref(".info/serverTimeOffset").on("value", (snap) => { serverOffset = snap.val(); });
 
     db.ref('users/'+uid).on('value', s => { bal = (s.val() && s.val().balance) || 0; document.getElementById('uBal').innerText = bal.toFixed(2); document.getElementById('uID').innerText = "ID: "+uid; });
 
-    // Numbers Rendering
+    // Number Buttons Display
     let nH = ""; for(let i=0; i<=9; i++) { 
         let c = (i%2==0)?'var(--red)':'var(--green)'; if(i==0||i==5) c='var(--violet)';
         nH += `<button class="n-btn" style="color:${c}; border-color:${c}" onclick="alert('Betting Open')">${i}</button>`; 
     }
     document.getElementById('nums').innerHTML = nH;
 
-    // Perfect Sync 60s Timer (Sare Players ke liye ek sath)
+    // Real-Time 60s Timer Sync
     setInterval(() => {
-        const now = Date.now() + serverOffset; // Precise Server Time
+        const now = Date.now() + serverOffset;
         const seconds = 60 - Math.floor((now / 1000) % 60);
         const currentPeriod = Math.floor(now / 60000);
         
@@ -92,11 +92,11 @@
 
         if(seconds === 1 && lastP !== currentPeriod) {
             lastP = currentPeriod;
-            generateResult(currentPeriod);
+            generateSyncResult(currentPeriod);
         }
     }, 1000);
 
-    function generateResult(p) {
+    function generateSyncResult(p) {
         db.ref('global_res/'+p).once('value', s => {
             if(!s.exists()) {
                 let winNum = Math.floor(Math.random()*10);
@@ -104,13 +104,13 @@
                     num: winNum,
                     color: (winNum%2==0)?'Red':'Green',
                     size: (winNum>=5)?'Big':'Small',
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    time: firebase.database.ServerValue.TIMESTAMP
                 });
             }
         });
     }
 
-    // History: Pichle 20 Results (Latest on Top)
+    // Fixed History: 20 Results saved and shown
     db.ref('global_res').limitToLast(20).on('value', s => {
         let h = "<tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr>";
         let data = [];
@@ -127,13 +127,13 @@
         if(bal >= a && a >= 200 && u.length > 5) {
             db.ref('users/'+uid).update({balance: bal - a});
             db.ref('requests').push({uid, amt: a, upi: u, type: 'Withdrawal', status: 'Pending'});
-            alert("Withdrawal Requested Successfully!"); closeM('witM');
-        } else alert("Invalid Amount or UPI ID");
+            alert("Sent Successfully!"); closeM('witM');
+        } else alert("Invalid Entry!");
     }
 
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
-    function checkAdmin() { if(prompt("Pass:")=="77759636477") { /* Admin Panel logic */ } }
+    function checkAdmin() { /* Balance click admin logic */ }
 </script>
 </body>
 </html>
