@@ -8,12 +8,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #fb5153; --bg: #f5f6fa; --card: #ffffff; --green: #2ecc71; --red: #e74c3c; --violet: #9b59b6; }
+        :root { --primary: #fb5153; --bg: #f5f6fa; --card: #ffffff; --green: #2ecc71; --red: #e74c3c; --violet: #9b59b6; --gold: #fbc531; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; user-select: none; }
         .header { background: var(--primary); padding: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
         .wallet-box { background: #fff; margin: 15px; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .bal-amt { font-size: 30px; font-weight: 800; margin: 10px 0; cursor: pointer; }
-        .game-area { background: #fff; margin: 15px; border-radius: 20px; padding: 15px; }
+        .game-area { background: #fff; margin: 15px; border-radius: 20px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .timer-box { display: flex; justify-content: space-between; background: #fff5f5; padding: 10px; border-radius: 12px; margin-bottom: 20px; }
         .grid-btn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         .btn { border: none; padding: 12px; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
@@ -23,8 +23,10 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: center; }
+        table { width: 100%; font-size: 11px; border-collapse: collapse; margin-top: 10px; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: center; }
+        .tab-btn { flex: 1; padding: 10px; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; }
+        .active-tab { background: var(--primary); color: #fff; }
     </style>
 </head>
 <body>
@@ -33,7 +35,7 @@
 
 <div class="wallet-box">
     <small>Available Balance</small>
-    <div class="bal-amt" id="clickableBal" onclick="checkAdmin()">₹<span id="uBal">0.00</span></div>
+    <div class="bal-amt" onclick="checkAdmin()">₹<span id="uBal">0.00</span></div>
     <div style="display:flex; gap:10px;">
         <button onclick="openM('depM')" style="flex:1; background:var(--green); border:none; padding:12px; border-radius:25px; color:#fff; font-weight:bold;">Deposit</button>
         <button onclick="openM('witM')" style="flex:1; background:var(--primary); border:none; padding:12px; border-radius:25px; color:#fff; font-weight:bold;">Withdraw</button>
@@ -57,9 +59,21 @@
     </div>
 </div>
 
+<div class="game-area" style="text-align:center;">
+    <button onclick="copyInvite()" style="width:100%; background:var(--gold); border:none; padding:15px; border-radius:15px; font-weight:800; color:#000;">🎁 INVITE FRIENDS (10% BONUS)</button>
+</div>
+
 <div class="game-area">
-    <b>My Game History</b>
-    <div id="hist" style="max-height: 200px; overflow-y: auto;">History loading...</div>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button onclick="showTab('game')" id="tabG" class="tab-btn active-tab">Game History</button>
+        <button onclick="showTab('my')" id="tabM" class="tab-btn" style="background:#eee;">My Bets</button>
+    </div>
+    <div id="gameHistory" style="display:block; max-height:300px; overflow-y:auto;">
+        <table id="resTable"><tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr></table>
+    </div>
+    <div id="myHistory" style="display:none; max-height:300px; overflow-y:auto;">
+        <table id="betTable"><tr><th>Period</th><th>Bet</th><th>Res</th><th>Profit</th></tr></table>
+    </div>
 </div>
 
 <div id="adminM" class="modal"><div class="modal-content" style="max-height:85vh; overflow-y:auto;">
@@ -67,22 +81,13 @@
     <div id="poolInfo" style="background:#f9f9f9; padding:10px; font-size:12px; border-radius:10px;"></div>
     <h4 style="margin:10px 0;">Force Result</h4>
     <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center;">
-        <button onclick="fixRes('Green')" style="background:green; color:white;">G</button>
-        <button onclick="fixRes('Red')" style="background:red; color:white;">R</button>
-        <button onclick="fixRes('Big')" style="background:orange; color:white;">B</button>
-        <button onclick="fixRes('Small')" style="background:black; color:white;">S</button>
+        <button onclick="fixRes('Green')" style="background:green; color:white; padding:10px;">G</button>
+        <button onclick="fixRes('Red')" style="background:red; color:white; padding:10px;">R</button>
+        <button onclick="fixRes('Big')" style="background:orange; color:white; padding:10px;">B</button>
+        <button onclick="fixRes('Small')" style="background:black; color:white; padding:10px;">S</button>
     </div>
-    <h4 style="margin:10px 0;">Deposit/Withdraw Requests</h4>
-    <div id="reqs"></div>
+    <div id="reqs" style="margin-top:10px;"></div>
     <button onclick="closeM('adminM')" style="margin-top:15px; width:100%; padding:10px; background:#444; color:#fff; border:none; border-radius:8px;">Close</button>
-</div></div>
-
-<div id="witM" class="modal"><div class="modal-content">
-    <h3>Withdrawal</h3>
-    <input type="number" id="wAmt" placeholder="Minimum ₹200">
-    <input type="text" id="wUpi" placeholder="Enter Your UPI ID">
-    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; font-weight:bold; border-radius:8px;">Submit Request</button>
-    <p onclick="closeM('witM')" style="color:red; cursor:pointer;">Cancel</p>
 </div></div>
 
 <div id="betM" class="modal"><div class="modal-content">
@@ -95,12 +100,16 @@
 <div id="depM" class="modal"><div class="modal-content">
     <h3>Deposit</h3>
     <input type="number" id="dAmt" placeholder="Amount" oninput="genQR()">
-    <div id="qrDisp" style="display:none; margin:10px 0;">
-        <img id="qrImg" style="width:150px;"><br><small>UPI: poonamlondhe52-1@okhdfcbank</small>
-    </div>
+    <div id="qrDisp" style="display:none; margin:10px 0;"><img id="qrImg" style="width:150px;"><br><small>UPI: poonamlondhe52-1@okhdfcbank</small></div>
     <input type="text" id="dUTR" placeholder="Enter 12 Digit UTR">
-    <button onclick="sendDep()" style="width:100%; background:var(--green); border:none; padding:12px; color:#fff; border-radius:8px;">Submit Deposit</button>
-    <p onclick="closeM('depM')" style="color:red; cursor:pointer;">Cancel</p>
+    <button onclick="sendDep()" style="width:100%; background:var(--green); border:none; padding:12px; color:#fff; border-radius:8px;">Submit</button>
+</div></div>
+
+<div id="witM" class="modal"><div class="modal-content">
+    <h3>Withdrawal</h3>
+    <input type="number" id="wAmt" placeholder="Min ₹200">
+    <input type="text" id="wUpi" placeholder="UPI ID">
+    <button onclick="sendWit()" style="width:100%; background:var(--primary); border:none; padding:12px; color:#fff; font-weight:bold; border-radius:8px;">Submit</button>
 </div></div>
 
 <script>
@@ -113,19 +122,22 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uid = localStorage.getItem('1CLUB_UID_FIX') || "U"+Math.floor(1000+Math.random()*9000);
-    localStorage.setItem('1CLUB_UID_FIX', uid);
+    let uid = localStorage.getItem('1CLUB_UID_FINAL') || "U"+Math.floor(1000+Math.random()*9000);
+    localStorage.setItem('1CLUB_UID_FINAL', uid);
     let bal = 0, selType = '', taps = 0, lastP = 0;
 
+    // Load Balance
     db.ref('users/'+uid).on('value', s => {
         let d = s.val() || {balance:0}; bal = d.balance;
         document.getElementById('uBal').innerText = bal.toFixed(2);
         document.getElementById('uID').innerText = "ID: "+uid;
     });
 
+    // Buttons Setup
     const numCont = document.getElementById('nums');
     for(let i=0; i<=9; i++) numCont.innerHTML += `<button class="n-btn" onclick="betPopup('${i}')" style="color:${i%2==0?'red':'green'}">${i}</button>`;
 
+    // Sync Timer & Period
     setInterval(() => {
         let now = Date.now(), s = 60 - Math.floor((now / 1000) % 60), p = Math.floor(now / 60000);
         document.getElementById('timer').innerText = "00:" + (s < 10 ? "0"+s : s);
@@ -141,7 +153,8 @@
                         let pool = { Green:0, Red:0, Violet:0, Big:0, Small:0, "0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0 };
                         b.forEach(u => u.forEach(x => pool[x.val().type] += parseFloat(x.val().amt)));
                         let win = m.val() || Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
-                        db.ref('global_res/'+p).set({win});
+                        let winNum = Math.floor(Math.random() * 10); // Logic for Number if color win
+                        db.ref('global_res/'+p).set({ win: win, num: winNum });
                         db.ref('admin/manual').set(null);
                     });
                 });
@@ -149,94 +162,86 @@
         });
     }
 
+    // Results & Popup Handling
     db.ref('global_res').on('child_added', snap => {
-        let p = snap.key, win = snap.val().win;
+        let p = snap.key, res = snap.val();
         db.ref('bets/'+p+'/'+uid).once('value', s => {
             if(s.exists()){
-                let won = false, winAmt = 0;
-                s.forEach(b => { if(b.val().type == win){ won = true; winAmt += b.val().amt * 1.9; }});
-                if(won) db.ref('users/'+uid+'/balance').transaction(c => (c||0)+winAmt);
-                // Save Game History
-                db.ref('history/'+uid+'/'+p).set({ res: win, status: won ? 'Win' : 'Loss', amt: won ? winAmt : s.val().amt });
+                let totalWin = 0;
+                s.forEach(b => {
+                    let bet = b.val();
+                    let isColor = (bet.type == res.win);
+                    let isSize = (bet.type == (res.num >= 5 ? 'Big' : 'Small'));
+                    let isNum = (bet.type == res.num);
+                    if(isColor || isSize || isNum) totalWin += bet.amt * 1.9;
+                });
+                if(totalWin > 0) {
+                    db.ref('users/'+uid+'/balance').transaction(c => (c||0) + totalWin);
+                    alert("WINNER! 🏆\nTotal Profit: ₹" + totalWin.toFixed(2));
+                } else alert("LOSS! ❌\nResult: " + res.win + " (" + res.num + ")");
+                db.ref('history/'+uid+'/'+p).set({ res: res.win + " " + res.num, profit: totalWin > 0 ? "+"+totalWin.toFixed(2) : "0.00" });
             }
         });
     });
 
-    // History Display Logic
-    db.ref('history/'+uid).limitToLast(10).on('value', s => {
-        let h = "<table><tr><th>Period</th><th>Res</th><th>Status</th></tr>";
-        s.forEach(x => { h += `<tr><td>${x.key}</td><td>${x.val().res}</td><td style="color:${x.val().status=='Win'?'green':'red'}">${x.val().status}</td></tr>`; });
-        document.getElementById('hist').innerHTML = h + "</table>";
+    // History & Tabs
+    function showTab(t) {
+        document.getElementById('gameHistory').style.display = t=='game'?'block':'none';
+        document.getElementById('myHistory').style.display = t=='my'?'block':'none';
+        document.getElementById('tabG').className = t=='game'?'tab-btn active-tab':'tab-btn';
+        document.getElementById('tabM').className = t=='my'?'tab-btn active-tab':'tab-btn';
+        if(t=='my') document.getElementById('tabG').style.background = "#eee"; else document.getElementById('tabM').style.background = "#eee";
+    }
+
+    db.ref('global_res').limitToLast(20).on('value', snap => {
+        let h = "<tr><th>Period</th><th>Num</th><th>Size</th><th>Color</th></tr>";
+        snap.forEach(x => { 
+            let d = x.val(); 
+            h += `<tr><td>${x.key}</td><td>${d.num}</td><td>${d.num>=5?'Big':'Small'}</td><td style="color:${d.win=='Red'?'red':'green'}">${d.win}</td></tr>`; 
+        });
+        document.getElementById('resTable').innerHTML = h;
     });
 
-    function genQR() {
-        let a = document.getElementById('dAmt').value;
-        if(a >= 100) {
-            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}%26cu=INR`;
-            document.getElementById('qrDisp').style.display = 'block';
-        }
-    }
+    db.ref('history/'+uid).limitToLast(10).on('value', s => {
+        let h = "<tr><th>Period</th><th>Bet</th><th>Res</th><th>Profit</th></tr>";
+        s.forEach(x => { h += `<tr><td>${x.key}</td><td>-</td><td>${x.val().res}</td><td style="color:${x.val().profit=='0.00'?'red':'green'}">${x.val().profit}</td></tr>`; });
+        document.getElementById('betTable').innerHTML = h;
+    });
 
-    // ADMIN 5-TAP LOGIN
-    function checkAdmin() {
-        taps++;
-        if(taps >= 5) {
-            if(prompt("Admin Password:") == "77759636477") { openM('adminM'); loadAdmin(); }
-            taps = 0;
-        }
-    }
-
+    // Admin & Utils
+    function checkAdmin() { taps++; if(taps>=5){ if(prompt("Pass:")=="77759636477") { openM('adminM'); loadAdmin(); } taps=0; } }
     function loadAdmin() {
         let p = document.getElementById('period').innerText;
         db.ref('bets/'+p).on('value', s => {
-            let info = "<b>TOTAL POOL:</b><br>";
+            let info = "<b>LIVE POOL:</b><br>";
             let totals = {};
             s.forEach(u => u.forEach(b => { totals[b.val().type] = (totals[b.val().type]||0) + parseFloat(b.val().amt); }));
             for(let k in totals) info += `${k}: ₹${totals[k]} | `;
-            document.getElementById('poolInfo').innerHTML = info || "No Bets Yet";
+            document.getElementById('poolInfo').innerHTML = info || "No bets";
         });
         db.ref('requests').on('value', s => {
-            let h = "<table><tr><th>Type</th><th>Amt</th><th>Info</th><th>Appr</th></tr>";
-            s.forEach(r => { h += `<tr><td>${r.val().type}</td><td>${r.val().amt}</td><td>${r.val().utr || r.val().upi}</td><td><button onclick="appr('${r.key}','${r.val().uid}',${r.val().amt},'${r.val().type}')">✔</button></td></tr>`; });
+            let h = "<table><tr><th>Type</th><th>Amt</th><th>Action</th></tr>";
+            s.forEach(r => { h += `<tr><td>${r.val().type}</td><td>${r.val().amt}</td><td><button onclick="appr('${r.key}','${r.val().uid}',${r.val().amt},'${r.val().type}')">✔</button></td></tr>`; });
             document.getElementById('reqs').innerHTML = h + "</table>";
         });
     }
-
-    function appr(k, u, a, type) { 
-        if(type == 'Dep') db.ref('users/'+u+'/balance').transaction(c => (c||0)+a); 
-        db.ref('requests/'+k).remove(); 
-    }
-
-    function sendWit() {
-        let a = parseInt(document.getElementById('wAmt').value), u = document.getElementById('wUpi').value;
-        if(a >= 200 && bal >= a && u.length > 5) {
-            db.ref('users/'+uid).update({balance: bal - a});
-            db.ref('requests').push({uid, amt: a, upi: u, type: 'Wit'});
-            alert("Withdrawal Request Sent!"); closeM('witM');
-        } else alert("Invalid Amount or UPI");
-    }
-
-    function sendDep() { 
-        let a = parseInt(document.getElementById('dAmt').value), utr = document.getElementById('dUTR').value;
-        if(a >= 100 && utr.length >= 10) {
-            db.ref('requests').push({uid, amt: a, utr: utr, type:'Dep'}); 
-            alert("Deposit Request Sent!"); closeM('depM'); 
-        } else alert("Fill details correctly");
-    }
-
-    function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Bet on "+t; openM('betM'); }
+    function appr(k, u, a, t) { if(t=='Dep') db.ref('users/'+u+'/balance').transaction(c=>(c||0)+a); db.ref('requests/'+k).remove(); }
+    function betPopup(t) { selType = t; document.getElementById('betTitle').innerText = "Bet: "+t; openM('betM'); }
     function confirmBet() {
         let a = parseInt(document.getElementById('betAmt').value), p = document.getElementById('period').innerText;
         if(bal >= a && a >= 10) {
             db.ref('users/'+uid).update({balance: bal - a});
             db.ref('bets/'+p+'/'+uid).push({type: selType, amt: a});
             closeM('betM');
-        } else alert("Low Balance!");
+        } else alert("Balance Low!");
     }
-    function fixRes(v) { db.ref('admin/manual').set(v); alert("Fixed: "+v); }
+    function copyInvite() { navigator.clipboard.writeText(window.location.href+"?ref="+uid); alert("Link Copied!"); }
+    function genQR() { let a = document.getElementById('dAmt').value; if(a>=100){ document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=poonamlondhe52-1@okhdfcbank%26am=${a}`; document.getElementById('qrDisp').style.display='block'; } }
+    function sendDep() { db.ref('requests').push({uid, amt: parseInt(document.getElementById('dAmt').value), type:'Dep'}); closeM('depM'); }
+    function sendWit() { let a = parseInt(document.getElementById('wAmt').value); if(bal>=a && a>=200){ db.ref('users/'+uid).update({balance: bal-a}); db.ref('requests').push({uid, amt: a, type:'Wit'}); closeM('witM'); } }
+    function fixRes(v) { db.ref('admin/manual').set(v); alert("Result Fixed!"); }
     function openM(id) { document.getElementById(id).style.display = 'flex'; }
     function closeM(id) { document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
-
