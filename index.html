@@ -79,7 +79,7 @@
 <div id="adminM" class="modal"><div class="modal-content" style="max-height:85vh; overflow-y:auto;">
     <h3>ADMIN PANEL</h3>
     <div id="poolInfo" style="background:#f9f9f9; padding:10px; font-size:12px; border-radius:10px; text-align:left;"></div>
-    <h4 style="margin:10px 0;">Force Next Result</h4>
+    <h4 style="margin:10px 0;">Force Result</h4>
     <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center;">
         <button onclick="fixRes('Green')" style="background:green; color:white; padding:10px;">G</button>
         <button onclick="fixRes('Red')" style="background:red; color:white; padding:10px;">R</button>
@@ -122,9 +122,10 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uid = localStorage.getItem('1CLUB_UID_V3') || "U"+Math.floor(1000+Math.random()*9000);
-    localStorage.setItem('1CLUB_UID_V3', uid);
+    let uid = localStorage.getItem('1CLUB_UID_VSEC') || "U"+Math.floor(1000+Math.random()*9000);
+    localStorage.setItem('1CLUB_UID_VSEC', uid);
     let bal = 0, selType = '', taps = 0, lastP = 0;
+    let sessionStartTime = Date.now(); // Page load time for security
 
     db.ref('users/'+uid).on('value', s => {
         let d = s.val() || {balance:0}; bal = d.balance;
@@ -132,7 +133,6 @@
         document.getElementById('uID').innerText = "ID: "+uid;
     });
 
-    // 0 & 5 Violet Color Logic
     const numCont = document.getElementById('nums');
     for(let i=0; i<=9; i++) {
         let btnCol = (i % 2 == 0) ? 'var(--red)' : 'var(--green)';
@@ -156,7 +156,6 @@
                         b.forEach(u => u.forEach(x => pool[x.val().type] += parseFloat(x.val().amt)));
                         let win = m.val() || Object.keys(pool).reduce((a,b) => pool[a] <= pool[b] ? a : b);
                         
-                        // Smart Number Logic based on Winner Color
                         let possibleNums = [];
                         if(win=='Green') possibleNums = [1,3,7,9];
                         else if(win=='Red') possibleNums = [2,4,6,8];
@@ -165,7 +164,7 @@
                         else possibleNums = [0,1,2,3,4,5,6,7,8,9];
                         
                         let winNum = possibleNums[Math.floor(Math.random() * possibleNums.length)];
-                        db.ref('global_res/'+p).set({ win: win, num: winNum });
+                        db.ref('global_res/'+p).set({ win: win, num: winNum, timestamp: Date.now() });
                         db.ref('admin/manual').set(null);
                     });
                 });
@@ -173,13 +172,17 @@
         });
     }
 
-    // Profit & Multi-bet Logic
+    // Profit Logic with Security Check
     db.ref('global_res').on('child_added', snap => {
         let p = snap.key, res = snap.val();
+        
+        // Anti-Refresh: Skip results generated before current page load
+        if(res.timestamp < sessionStartTime) return;
+
         db.ref('bets/'+p+'/'+uid).once('value', s => {
             if(s.exists()){
                 let totalWin = 0, betInfo = "";
-                let winSize = (res.num >= 5) ? 'Big' : 'Small'; // 0-4 Small, 5-9 Big
+                let winSize = (res.num >= 5) ? 'Big' : 'Small';
                 
                 s.forEach(b => {
                     let bet = b.val();
@@ -187,7 +190,7 @@
                     let isSize = (bet.type == winSize);
                     let isNum = (bet.type == res.num);
                     if(isColor || isSize) totalWin += bet.amt * 1.9;
-                    if(isNum) totalWin += bet.amt * 9; // 9x Number Profit
+                    if(isNum) totalWin += bet.amt * 9;
                     betInfo += bet.type + ", ";
                 });
 
