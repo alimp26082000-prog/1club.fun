@@ -40,7 +40,7 @@ input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-rad
 /* Popup Styles */
 .win-bg { background: linear-gradient(135deg, #2ecc71, #27ae60); color:white; text-align:center;}
 .loss-bg { background: linear-gradient(135deg, #e74c3c, #c0392b); color:white; text-align:center;}
-#qrcode { display: flex; justify-content: center; margin: 15px 0; }
+#qrcode { display: flex; justify-content: center; margin: 15px 0; border: 5px solid #fff; }
 </style>
 </head>
 
@@ -88,12 +88,12 @@ input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-rad
 <div id="depM" class="modal">
     <div class="modal-content">
         <h3>Deposit Money</h3>
-        <input type="number" id="depAmt" placeholder="Enter Amount">
+        <input type="number" id="depAmt" placeholder="Enter Amount (Min ₹10)">
         <button class="btn" style="background:var(--primary); width:100%" onclick="genQR()">Generate QR</button>
         <div id="qrcode"></div>
         <div id="utrArea" style="display:none">
-            <p style="font-size:12px; color:red;">Pay to QR and enter UTR/Ref No. below:</p>
-            <input type="text" id="utrNum" placeholder="Enter 12 Digit UTR Number">
+            <p style="font-size:12px; color:red; text-align:center;">Pay to QR and enter 12-digit UTR below:</p>
+            <input type="text" id="utrNum" placeholder="Enter UTR Number">
             <button class="btn" style="background:var(--green); width:100%" onclick="subDep()">Submit Deposit</button>
         </div>
         <button class="btn" style="background:#333; width:100%; margin-top:10px;" onclick="closeM('depM')">Close</button>
@@ -139,9 +139,8 @@ const db=firebase.database();
 let uid=localStorage.getItem('UID')||"U"+Math.floor(1000+Math.random()*9000);
 localStorage.setItem('UID',uid);
 
-let myBet = null; // Track if user placed a bet
+let myBet = null;
 
-// Timer Logic
 function startTimer() {
     setInterval(() => {
         let now = new Date();
@@ -150,7 +149,6 @@ function startTimer() {
         document.getElementById('period').innerText = now.getFullYear().toString() + (now.getMonth()+1) + now.getDate() + (now.getHours()*60 + now.getMinutes());
         
         if(sec === 59 && myBet) {
-            // Check result and show popup (Dummy for now, triggered by data update)
             showResult(true, 100); 
             myBet = null; 
         }
@@ -158,26 +156,29 @@ function startTimer() {
 }
 startTimer();
 
-// Deposit Functions
+// UPDATED DEPOSIT FUNCTION WITH YOUR UPI ID
 function genQR() {
     let amt = document.getElementById('depAmt').value;
     if(!amt || amt < 10) return alert("Min Deposit ₹10");
     document.getElementById('qrcode').innerHTML = "";
-    let upi = `upi://pay?pa=YOUR_UPI_ID@okicici&pn=1CLUB%20PRO&am=${amt}&cu=INR`; 
-    new QRCode(document.getElementById("qrcode"), { text: upi, width: 180, height: 180 });
+    
+    // Aapki ID yahan set hai
+    let myUpi = "poonamlondhe52-1@okhdfcbank";
+    let upiString = `upi://pay?pa=${myUpi}&pn=1CLUB%20PRO&am=${amt}&cu=INR`; 
+    
+    new QRCode(document.getElementById("qrcode"), { text: upiString, width: 180, height: 180 });
     document.getElementById('utrArea').style.display = "block";
 }
 
 function subDep() {
     let amt = document.getElementById('depAmt').value;
     let utr = document.getElementById('utrNum').value;
-    if(utr.length < 10) return alert("Sahi UTR number daalein");
+    if(utr.length < 8) return alert("Sahi UTR number daalein");
     db.ref('requests').push({ uid: uid, amt: amt, utr: utr, type: 'Deposit', status: 'Pending' });
     alert("Request Sent! Admin approve karega.");
     closeM('depM');
 }
 
-// Withdraw Function
 function subWit() {
     let amt = document.getElementById('witAmt').value;
     let upi = document.getElementById('witUpi').value;
@@ -188,7 +189,7 @@ function subWit() {
 }
 
 function openInvite() {
-    let link = window.location.href + "?ref=" + uid;
+    let link = window.location.href.split('?')[0] + "?ref=" + uid;
     navigator.clipboard.writeText(link);
     alert("Referral Link Copied: " + link);
 }
@@ -206,7 +207,6 @@ function showResult(isWin, amount) {
     openM('resModal');
 }
 
-// Global UI Stuff
 db.ref('users/'+uid).on('value',s=>{
     let b = (s.val()&&s.val().balance)||0;
     document.getElementById('uBal').innerText=b.toFixed(2);
@@ -251,6 +251,6 @@ document.getElementById('nums').innerHTML=nH;
 function openM(id){ document.getElementById(id).style.display="flex"; }
 function closeM(id){ document.getElementById(id).style.display="none"; }
 </script>
-
 </body>
-</html>
+    </html>
+            
