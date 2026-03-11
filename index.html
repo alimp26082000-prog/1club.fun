@@ -3,148 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AK AVIATOR | Pro</title>
+    <title>AK AVIATOR | Server Sync</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
-        :root { --red: #e91a3d; --bg: #0b0b0d; --card: #1c1c1e; --gold: #fbc02d; --green: #28a745; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
+        :root { --red: #ff003c; --bg: #050505; --green: #2ecc71; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; }
         
-        .header { background: #121212; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--red); }
-        .game-title { font-size: 20px; font-weight: 900; color: var(--red); cursor: pointer; }
-        .wallet { background: #000; padding: 5px 12px; border-radius: 20px; border: 1px solid #333; font-weight: bold; color: var(--green); }
-
-        .top-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
-        .top-btn { padding: 8px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 12px; }
-
-        .game-area { height: 220px; background: radial-gradient(circle, #250101 0%, #000000 100%); position: relative; overflow: hidden; }
-        #multiplier { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 50px; font-weight: 900; z-index: 10; }
-        #plane { position: absolute; bottom: 20px; left: 20px; width: 55px; z-index: 5; transition: transform 0.1s linear; }
+        .header { display: flex; justify-content: space-between; padding: 15px; background: #111; border-bottom: 2px solid var(--red); }
+        .game-title { font-weight: 900; color: var(--red); cursor: pointer; }
         
-        .player-list { height: 180px; overflow-y: hidden; padding: 0 10px; margin-bottom: 120px; }
-        .player-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px; border-bottom: 1px solid #151515; }
+        .stage { height: 280px; position: relative; background: radial-gradient(circle, #200 0%, #000 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #mult-display { font-size: 70px; font-weight: 900; z-index: 10; transition: 0.1s; }
+        #jet { position: absolute; width: 60px; bottom: 20px; left: 20px; z-index: 5; }
 
-        .bet-box { background: var(--card); padding: 15px; border-radius: 20px 20px 0 0; position: fixed; bottom: 0; width: 100%; box-sizing: border-box; z-index: 100; }
-        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        input { background: #000; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; width: 40%; font-size: 18px; text-align: center; outline: none; }
-        .bet-btn { flex-grow: 1; border-radius: 10px; border: none; font-size: 18px; font-weight: bold; color: white; background: var(--green); }
-
-        /* Modals */
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center; }
-        .modal-content { background: #1c1c1e; width: 85%; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #333; }
-        .modal input { width: 100%; margin-bottom: 15px; }
+        .admin-panel { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:9999; padding: 20px; box-sizing: border-box; }
+        .admin-panel input { width: 100%; padding: 15px; margin: 10px 0; background: #222; border: 1px solid var(--red); color: white; font-size: 18px; border-radius: 8px; }
+        
+        .bet-area { position: fixed; bottom: 0; width: 100%; background: #111; padding: 20px; box-sizing: border-box; border-top: 1px solid #333; }
+        .bet-btn { width: 100%; padding: 18px; border-radius: 12px; font-size: 22px; font-weight: 900; background: var(--green); color: white; border: none; }
+        .status-bar { font-size: 10px; color: #555; text-align: center; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="game-title" id="titleBtn">AK AVIATOR</div>
-    <div class="wallet" id="userBal">₹0.00</div>
+    <div class="game-title" id="masterAdmin">AK AVIATOR</div>
+    <div id="userBal" style="color:var(--green); font-weight:bold;">₹0.00</div>
 </div>
 
-<div class="top-btns">
-    <button class="top-btn" style="background:var(--green)" onclick="openM('depM')">DEPOSIT</button>
-    <button class="top-btn" style="background:#444" onclick="openM('withM')">WITHDRAW</button>
+<div class="stage">
+    <div id="mult-display">1.00x</div>
+    <img src="https://img.icons8.com/color/96/fighter-jet.png" id="jet">
 </div>
 
-<div class="game-area">
-    <div id="multiplier">1.00x</div>
-    <img src="https://img.icons8.com/color/96/fighter-jet.png" id="plane">
+<div class="bet-area">
+    <input type="number" id="betAmt" value="100" style="width:100%; background:#000; color:white; border:1px solid #444; padding:10px; margin-bottom:10px; border-radius:8px; text-align:center;">
+    <button id="mainBtn" class="bet-btn">BET</button>
+    <div class="status-bar">SERVER CONNECTED - GLOBAL SYNC ON</div>
 </div>
 
-<div class="player-list" id="fakePlayers"></div>
-
-<div class="bet-box">
-    <div class="input-row">
-        <input type="number" id="betAmt" value="100">
-        <button id="mainBtn" class="bet-btn">BET</button>
-    </div>
-</div>
-
-<div id="depM" class="modal"><div class="modal-content">
-    <h3>Deposit</h3>
-    <p style="font-size:12px; color:#888">UPI ID: Poonamlondhe52-1@okhdfcbank</p>
-    <input type="number" id="depAmount" placeholder="Amount" oninput="genQR()">
-    <div id="qrArea" style="display:none;">
-        <img id="qrImg" src="" width="180" style="background:white; padding:10px; border-radius:10px; margin-bottom:10px;">
-        <input type="text" id="utr" placeholder="Enter 12-digit UTR">
-        <button class="top-btn" style="background:var(--green); width:100%" onclick="submitDep()">SUBMIT</button>
-    </div>
-    <button class="top-btn" style="background:#333; width:100%; margin-top:10px" onclick="closeM('depM')">Close</button>
-</div></div>
-
-<div id="withM" class="modal"><div class="modal-content">
-    <h3 style="color:var(--gold)">Withdraw Money</h3>
-    <p style="font-size:11px; color:#777; margin-bottom:15px;">Min: ₹500 | Max: ₹50,000</p>
+<div id="adminUI" class="admin-panel">
+    <h2 style="color:var(--red); text-align:center;">MASTER CONTROL</h2>
+    <label>Set Next Crash (e.g. 1.05 or 500.00):</label>
+    <input type="number" id="manualCrash" placeholder="Enter Multiplier">
+    <button onclick="updateServerCrash()" class="bet-btn" style="background:var(--red)">SET GLOBAL CRASH</button>
     
-    <input type="number" id="withAmount" placeholder="Enter Amount (₹)">
-    <input type="text" id="withUpi" placeholder="Enter Your UPI ID (e.g. name@upi)">
-    
-    <button class="bet-btn" style="width:100%; padding:12px;" onclick="submitWithdraw()">Request Withdrawal</button>
-    
-    <div style="text-align:left; font-size:10px; color:#666; margin-top:15px;">
-        * Payments are processed within 2-24 hours.<br>
-        * Ensure UPI ID is correct.
+    <div style="margin-top:30px;">
+        <p>Deposit Requests:</p>
+        <div id="depList" style="font-size:12px; height:150px; overflow-y:auto; border:1px solid #333; padding:10px;"></div>
     </div>
-    <button class="top-btn" style="background:#333; width:100%; margin-top:15px" onclick="closeM('withM')">Cancel</button>
-</div></div>
+    <button onclick="closeAdmin()" class="bet-btn" style="background:#444; margin-top:20px;">BACK TO GAME</button>
+</div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let uid = localStorage.getItem('AX_UID') || 'U'+Math.floor(Math.random()*9999);
-    localStorage.setItem('AX_UID', uid);
 
-    // Withdrawal Logic
-    function submitWithdraw() {
-        let amt = document.getElementById('withAmount').value;
-        let upi = document.getElementById('withUpi').value;
-        
-        if(amt < 500) return alert("Minimum withdrawal is ₹500");
-        if(upi.length < 5 || !upi.includes('@')) return alert("Enter a valid UPI ID");
+    let currentMult = 1.00;
+    let isCrashed = false;
+    let globalCrashPoint = 2.00;
 
-        // Send to Admin Panel
-        db.ref('admin/withdrawRequests').push({
-            uid: uid,
-            amount: amt,
-            upiId: upi,
-            status: 'pending',
-            timestamp: Date.now()
-        }).then(() => {
-            alert("Withdrawal request sent to admin!");
-            closeM('withM');
+    // Server-Side Sync Logic
+    // Plane hamesha udta rahega, chahe koi khele ya na khele
+    function syncGame() {
+        db.ref('game/state').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(!data) return;
+
+            currentMult = data.multiplier;
+            isCrashed = data.isCrashed;
+            globalCrashPoint = data.crashAt;
+
+            if (isCrashed) {
+                document.getElementById('mult-display').innerText = "FLEW AWAY!";
+                document.getElementById('mult-display').style.color = "var(--red)";
+                document.getElementById('jet').style.opacity = "0";
+            } else {
+                document.getElementById('mult-display').innerText = currentMult.toFixed(2) + "x";
+                document.getElementById('mult-display').style.color = "white";
+                document.getElementById('jet').style.opacity = "1";
+                animateJet(currentMult);
+            }
         });
     }
 
-    // Existing Functions
-    function genQR() {
-        let amt = document.getElementById('depAmount').value;
-        if(amt > 0) {
-            document.getElementById('qrArea').style.display = 'block';
-            let upi = `upi://pay?pa=Poonamlondhe52-1@okhdfcbank&pn=AK%20AVIATOR&am=${amt}&cu=INR`;
-            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upi)}`;
+    // Admin Functions
+    function updateServerCrash() {
+        let val = parseFloat(document.getElementById('manualCrash').value);
+        if(val >= 1) {
+            db.ref('game/control').set({ nextCrash: val });
+            alert("Global Crash set to " + val + "x");
+            closeAdmin();
         }
     }
 
-    function openM(id) { document.getElementById(id).style.display='flex'; }
-    function closeM(id) { document.getElementById(id).style.display='none'; }
-    
-    // Fake Player Simulation
-    setInterval(() => {
-        const list = document.getElementById('fakePlayers');
-        const names = ["Aman", "Priya", "Rahul", "Sonia", "Imran"];
-        const n = names[Math.floor(Math.random()*names.length)];
-        const b = (Math.random()*500 + 100).toFixed(0);
-        list.innerHTML = `<div class="player-item"><span>${n}</span><span>₹${b}</span><span style="color:var(--green)">+₹${(b*1.5).toFixed(0)}</span></div>` + list.innerHTML;
-        if(list.children.length > 8) list.removeChild(list.lastChild);
-    }, 2500);
+    // Auto-Engine (Runs only on your Master Admin Side)
+    // Ye system apne aap plane udayega aur crash karega
+    function runGlobalEngine() {
+        let m = 1.00;
+        let active = true;
+        let target = globalCrashPoint;
 
-    // Admin Panel Entry
+        setInterval(() => {
+            if(active) {
+                m += (m < 10) ? 0.01 : 0.2;
+                db.ref('game/state').update({ multiplier: m, isCrashed: false });
+                if(m >= target) {
+                    active = false;
+                    db.ref('game/state').update({ isCrashed: true });
+                    setTimeout(() => { 
+                        m = 1.00; active = true; 
+                        // Har round ke baad ek naya random target (Admin control priority)
+                        db.ref('game/control').once('value', s => {
+                            target = s.val()?.nextCrash || (Math.random()*3 + 1.1);
+                        });
+                    }, 4000);
+                }
+            }
+        }, 100);
+    }
+
+    function animateJet(m) {
+        let x = (m - 1) * 25; let y = (m - 1) * 12;
+        document.getElementById('jet').style.transform = `translate(${Math.min(x, 280)}px, -${Math.min(y, 180)}px)`;
+    }
+
+    // Admin Trigger (5 Taps)
     let taps = 0;
-    document.getElementById('titleBtn').onclick = () => {
-        taps++; if(taps === 5 && prompt("Admin Code:") === "77759636477") alert("Admin: New requests available in Firebase!");
+    document.getElementById('masterAdmin').onclick = () => {
+        taps++;
+        if(taps === 5) {
+            let code = prompt("Admin Key:");
+            if(code === "77759636477") document.getElementById('adminUI').style.display = 'block';
+            taps = 0;
+        }
     };
+
+    function closeAdmin() { document.getElementById('adminUI').style.display = 'none'; }
+
+    // Initial Sync
+    syncGame();
+    // Note: 'runGlobalEngine' ko aap kisi ek browser tab mein chala kar chhod dena, 
+    // tabhi plane sabki screen par udelta rahega.
+    if(confirm("Are you the Admin? Click OK to start Global Server Engine.")) {
+        runGlobalEngine();
+    }
 </script>
 </body>
 </html>
