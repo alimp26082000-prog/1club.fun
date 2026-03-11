@@ -12,38 +12,30 @@
 
 <style>
 :root { --primary:#fb5153; --bg:#f5f6fa; --green:#2ecc71; --red:#e74c3c; --violet:#9b59b6; --gold:#fbc531; --orange:#ffa502; }
-body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:80px;overflow-x:hidden;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:80px;}
 .header{background:var(--primary);padding:15px;color:#fff;display:flex;justify-content:space-between;font-weight:800}
 .wallet-box{background:#fff;margin:15px;border-radius:20px;padding:20px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
 .bal-amt{font-size:30px;font-weight:800;margin:10px 0;}
 .game-area{background:#fff;margin:15px;border-radius:20px;padding:15px}
 .timer-box{display:flex;justify-content:space-between;background:#fff5f5;padding:10px;border-radius:12px;margin-bottom:20px}
 .grid-btn{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
-.btn{border:none;padding:12px;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;transition:0.3s;}
-.btn:active{transform:scale(0.95);}
+.btn{border:none;padding:12px;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;}
 .num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
-.n-btn{border:2px solid #ddd;background:#fff;padding:10px;border-radius:50%;font-weight:bold;width:45px;height:45px;display:flex;align-items:center;justify-content:center;margin:auto;cursor:pointer;}
+.n-btn{border:2px solid #ddd;background:#fff;padding:10px;border-radius:50%;font-weight:bold;width:45px;height:45px;display:flex;align-items:center;justify-content:center;margin:auto}
 .bs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
 table{width:100%;font-size:12px;border-collapse:collapse;margin-top:10px}
 th,td{border-bottom:1px solid #eee;padding:10px;text-align:center}
 
-/* Navigation */
 .nav-bar { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 1000; }
 .nav-item { text-align: center; font-size: 11px; color: #666; cursor: pointer; flex: 1; }
 .nav-item b { display: block; font-size: 18px; margin-bottom: 2px; }
 
-/* Modals */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:5000;align-items:center;justify-content:center}
-.modal-content{background:#fff;padding:20px;border-radius:15px;width:85%;max-height:80vh;overflow-y:auto;position:relative;animation:slideUp 0.3s;}
-@keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
-input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px; box-sizing: border-box;}
+.modal-content{background:#fff;padding:20px;border-radius:15px;width:85%;max-height:80vh;overflow-y:auto;}
 
-/* Status Popups */
-.win-bg { background: linear-gradient(135deg, #2ecc71, #27ae60); color:white; text-align:center; border-radius: 20px;}
-.loss-bg { background: linear-gradient(135deg, #e74c3c, #c0392b); color:white; text-align:center; border-radius: 20px;}
-.reject-btn { background: #555; padding: 5px 10px; color: #fff; border-radius: 5px; cursor: pointer; font-size: 10px; margin-top: 5px; }
-
-#qrcode { display: flex; justify-content: center; margin: 15px 0; border: 5px solid #fff; }
+.win-bg { background: linear-gradient(135deg, #2ecc71, #27ae60); color:white; text-align:center;}
+.loss-bg { background: linear-gradient(135deg, #e74c3c, #c0392b); color:white; text-align:center;}
+input, select{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px; box-sizing: border-box;}
 </style>
 </head>
 
@@ -78,12 +70,10 @@ input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-rad
 
 <div class="game-area">
     <h4>History (Last 20 Results)</h4>
-    <div style="overflow-x:auto;">
-        <table id="resTable">
-            <thead><tr><th>Period</th><th>Number</th><th>Colour</th><th>Size</th></tr></thead>
-            <tbody id="historyBody"></tbody>
-        </table>
-    </div>
+    <table id="resTable">
+        <thead><tr><th>Period</th><th>Number</th><th>Color</th><th>Size</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+    </table>
 </div>
 
 <div class="nav-bar">
@@ -95,41 +85,10 @@ input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-rad
 
 <div id="betM" class="modal">
     <div class="modal-content">
-        <h3 id="betTitle">Place Bet</h3>
-        <p>Selected: <b id="selOpt">--</b></p>
-        <input type="number" id="betAmt" placeholder="Enter Amount (₹10, ₹50...)" value="10">
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-            <button class="btn" style="background:#eee; color:#333; flex:1;" onclick="setBetAmt(10)">₹10</button>
-            <button class="btn" style="background:#eee; color:#333; flex:1;" onclick="setBetAmt(50)">₹50</button>
-            <button class="btn" style="background:#eee; color:#333; flex:1;" onclick="setBetAmt(100)">₹100</button>
-        </div>
+        <h3>Place Bet: <span id="selOpt">--</span></h3>
+        <input type="number" id="betAmt" placeholder="Amount (Min ₹10)" value="10">
         <button class="btn" style="background:var(--primary); width:100%" onclick="confirmBet()">Confirm Bet</button>
         <button class="btn" style="background:#333; width:100%; margin-top:10px;" onclick="closeM('betM')">Cancel</button>
-    </div>
-</div>
-
-<div id="depM" class="modal">
-    <div class="modal-content">
-        <h3>Deposit Money</h3>
-        <input type="number" id="depAmt" placeholder="Enter Amount (Min ₹10)">
-        <button class="btn" style="background:var(--primary); width:100%" onclick="genQR()">Generate QR</button>
-        <div id="qrcode"></div>
-        <div id="utrArea" style="display:none">
-            <p style="font-size:11px; color:red; text-align:center;">Pay and enter 12-digit UTR below:</p>
-            <input type="text" id="utrNum" placeholder="Enter UTR Number">
-            <button class="btn" style="background:var(--green); width:100%" onclick="subDep()">Submit Deposit</button>
-        </div>
-        <button class="btn" style="background:#333; width:100%; margin-top:10px;" onclick="closeM('depM')">Close</button>
-    </div>
-</div>
-
-<div id="witM" class="modal">
-    <div class="modal-content">
-        <h3>Withdraw Money</h3>
-        <input type="number" id="witAmt" placeholder="Enter Amount (Min ₹100)">
-        <input type="text" id="witUpi" placeholder="Enter UPI ID">
-        <button class="btn" style="background:var(--primary); width:100%" onclick="subWit()">Request Withdrawal</button>
-        <button class="btn" style="background:#333; width:100%; margin-top:10px;" onclick="closeM('witM')">Close</button>
     </div>
 </div>
 
@@ -137,14 +96,27 @@ input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-rad
     <div id="resBox" class="modal-content">
         <h2 id="resStatus">--</h2>
         <div id="resAmt" style="font-size:32px; font-weight:800;">₹0.00</div>
-        <button class="btn" style="background:#fff; color:#333; width:100%; margin-top:20px;" onclick="closeM('resModal')">Close</button>
+        <button class="btn" style="background:#fff; color:#333; width:100%; margin-top:15px;" onclick="closeM('resModal')">Close</button>
     </div>
 </div>
 
 <div id="adminM" class="modal">
     <div class="modal-content">
         <h3>ADMIN CONTROL</h3>
-        <div id="adminReqs" style="font-size:11px;">Loading...</div>
+        <hr>
+        <h4>Set Next Result (Manual)</h4>
+        <select id="admNum">
+            <option value="0">0 (Violet/Red)</option><option value="1">1 (Green)</option>
+            <option value="2">2 (Red)</option><option value="3">3 (Green)</option>
+            <option value="4">4 (Red)</option><option value="5">5 (Violet/Green)</option>
+            <option value="6">6 (Red)</option><option value="7">7 (Green)</option>
+            <option value="8">8 (Red)</option><option value="9">9 (Green)</option>
+        </select>
+        <button class="btn" style="background:var(--green); width:100%" onclick="setManualResult()">Set Result Now</button>
+        <p style="font-size:10px; color:gray;">*Agar set nahi karenge toh Auto-Low-Amount logic chalega.</p>
+        <hr>
+        <h4>Requests</h4>
+        <div id="adminReqs">Loading...</div>
         <button class="btn" style="background:#333; width:100%; margin-top:15px;" onclick="closeM('adminM')">Close</button>
     </div>
 </div>
@@ -164,116 +136,88 @@ localStorage.setItem('UID',uid);
 
 let myBet = null;
 let currentPeriod = "";
-let userBalance = 0;
 
-// Timer Logic
 function startTimer() {
     setInterval(() => {
         let d = new Date();
         let s = 60 - d.getSeconds();
         document.getElementById('timer').innerText = "00:" + s.toString().padStart(2,'0');
-        let p = d.getFullYear().toString() + (d.getMonth()+1).toString().padStart(2,'0') + d.getDate().toString().padStart(2,'0') + (d.getHours()*60 + d.getMinutes());
-        currentPeriod = p;
-        document.getElementById('period').innerText = p;
+        currentPeriod = d.getFullYear().toString() + (d.getMonth()+1).toString().padStart(2,'0') + d.getDate().toString().padStart(2,'0') + (d.getHours()*60 + d.getMinutes());
+        document.getElementById('period').innerText = currentPeriod;
 
-        if(s === 1) {
-            checkResult(p);
-        }
+        // Auto Logic at 58th second (If Admin hasn't set manual)
+        if(s === 2) { runAutoResultLogic(currentPeriod); }
+        
+        // Show Popup at 1st second
+        if(s === 59) { listenForResult(currentPeriod - 1); }
     }, 1000);
 }
 startTimer();
 
-// Betting System
-function openBet(opt) {
-    document.getElementById('selOpt').innerText = opt;
-    openM('betM');
-}
-
-function setBetAmt(a) { document.getElementById('betAmt').value = a; }
-
-function confirmBet() {
-    let amt = parseFloat(document.getElementById('betAmt').value);
-    let opt = document.getElementById('selOpt').innerText;
-    
-    if(amt > userBalance) return alert("Insufficient Balance!");
-    if(amt < 10) return alert("Minimum Bet ₹10");
-
-    // Save Bet to Global Pool for Admin Logic (Low amount wins)
-    db.ref('active_bets/' + currentPeriod + '/' + opt).transaction(c => (c || 0) + amt);
-    
-    // Save User's Bet locally
-    myBet = { opt: opt, amt: amt, period: currentPeriod };
-    
-    // Deduct Balance
-    db.ref('users/'+uid+'/balance').transaction(c => (c || 0) - amt);
-    
-    closeM('betM');
-    alert("Bet placed on: " + opt);
-}
-
-// Low Amount Logic & Popup
-function checkResult(p) {
+// AUTO RESULT: Low Amount Wins Logic
+function runAutoResultLogic(p) {
     db.ref('global_res/' + p).once('value', s => {
-        if(s.exists() && myBet && myBet.period == p) {
-            let res = s.val();
-            let win = false;
-            let winAmt = 0;
+        if(!s.exists()) { // Only run if Admin hasn't set it
+            db.ref('active_bets/' + p).once('value', snap => {
+                let bets = snap.val() || {};
+                let minAmt = Infinity;
+                let winNum = Math.floor(Math.random() * 10); // Default random
 
-            if(myBet.opt == res.win || myBet.opt == res.num || myBet.opt == res.size) win = true;
-
-            if(win) {
-                winAmt = myBet.amt * (isNaN(myBet.opt) ? 1.9 : 8);
-                db.ref('users/'+uid+'/balance').transaction(c => (c || 0) + winAmt);
-                showStatusPopup(true, winAmt);
-            } else {
-                showStatusPopup(false, myBet.amt);
-            }
-            myBet = null; // Clear bet after popup
+                // Logic to find number with least total bet
+                for(let i=0; i<=9; i++){
+                    let amt = bets[i] || 0;
+                    if(amt < minAmt) { minAmt = amt; winNum = i; }
+                }
+                
+                let col = (winNum%2==0)?'Red':'Green'; if(winNum==0||winNum==5) col='Violet';
+                let sz = (winNum>4)?'Big':'Small';
+                db.ref('global_res/' + p).set({ num: winNum, win: col, size: sz });
+            });
         }
     });
 }
 
-function showStatusPopup(isWin, amt) {
-    let box = document.getElementById('resBox');
-    box.className = isWin ? "modal-content win-bg" : "modal-content loss-bg";
-    document.getElementById('resStatus').innerText = isWin ? "WINNING" : "LOSS";
-    document.getElementById('resAmt').innerText = (isWin ? "+₹" : "-₹") + amt.toFixed(2);
-    openM('resModal');
+function listenForResult(p) {
+    db.ref('global_res/' + p).once('value', s => {
+        if(s.exists() && myBet && myBet.period == p) {
+            let res = s.val();
+            let isWin = (myBet.opt == res.win || myBet.opt == res.num || myBet.opt == res.size);
+            let multiplier = isNaN(myBet.opt) ? 1.9 : 8;
+            let winAmt = isWin ? myBet.amt * multiplier : 0;
+            
+            if(isWin) db.ref('users/'+uid+'/balance').transaction(c => (c||0) + winAmt);
+            
+            let box = document.getElementById('resBox');
+            box.className = isWin ? "modal-content win-bg" : "modal-content loss-bg";
+            document.getElementById('resStatus').innerText = isWin ? "WINNING" : "LOSS";
+            document.getElementById('resAmt').innerText = (isWin ? "+₹" : "-₹") + (isWin ? winAmt : myBet.amt).toFixed(2);
+            openM('resModal');
+            myBet = null;
+        }
+    });
 }
 
-// Deposit System
-function genQR() {
-    let a = document.getElementById('depAmt').value;
-    if(a < 10) return alert("Min ₹10");
-    document.getElementById('qrcode').innerHTML = "";
-    let u = `upi://pay?pa=poonamlondhe52-1@okhdfcbank&pn=1CLUB_PRO&am=${a}&cu=INR`;
-    new QRCode(document.getElementById("qrcode"), { text: u, width: 160, height: 160 });
-    document.getElementById('utrArea').style.display = "block";
+function openBet(o) { document.getElementById('selOpt').innerText = o; openM('betM'); }
+
+function confirmBet() {
+    let amt = parseFloat(document.getElementById('betAmt').value);
+    db.ref('users/'+uid+'/balance').once('value', s => {
+        let bal = s.val() || 0;
+        if(amt > bal) return alert("Low Balance!");
+        db.ref('users/'+uid+'/balance').set(bal - amt);
+        
+        let opt = document.getElementById('selOpt').innerText;
+        db.ref('active_bets/' + currentPeriod + '/' + opt).transaction(c => (c||0) + amt);
+        
+        myBet = { opt: opt, amt: amt, period: currentPeriod };
+        closeM('betM');
+        alert("Bet Placed!");
+    });
 }
 
-function subDep() {
-    let a = document.getElementById('depAmt').value;
-    let u = document.getElementById('utrNum').value;
-    if(u.length < 10) return alert("Enter valid UTR");
-    db.ref('requests').push({ uid:uid, amt:a, utr:u, type:'Deposit', status:'Pending' });
-    alert("Deposit submitted!");
-    closeM('depM');
-}
-
-function subWit() {
-    let a = document.getElementById('witAmt').value;
-    let upi = document.getElementById('witUpi').value;
-    if(a < 100) return alert("Min Withdrawal ₹100");
-    db.ref('requests').push({ uid:uid, amt:a, upi:upi, type:'Withdraw', status:'Pending' });
-    alert("Withdrawal request sent!");
-    closeM('witM');
-}
-
-// Data Loaders
 db.ref('users/'+uid).on('value',s=>{
-    userBalance = (s.val() && s.val().balance) || 0;
-    document.getElementById('uBal').innerText = userBalance.toFixed(2);
-    document.getElementById('uID').innerText = "ID: " + uid;
+    document.getElementById('uBal').innerText=((s.val()&&s.val().balance)||0).toFixed(2);
+    document.getElementById('uID').innerText="ID: "+uid;
 });
 
 db.ref('global_res').limitToLast(20).on('value', snap => {
@@ -285,49 +229,39 @@ db.ref('global_res').limitToLast(20).on('value', snap => {
     document.getElementById('historyBody').innerHTML = h;
 });
 
-// Admin Control
-function checkAdmin() { if(prompt("Admin Password")=="77759636477"){ openM('adminM'); loadAdmin(); } }
+function checkAdmin() { if(prompt("Pass")=="77759636477"){ openM('adminM'); loadAdmin(); } }
+
+function setManualResult() {
+    let n = document.getElementById('admNum').value;
+    let col = (n%2==0)?'Red':'Green'; if(n==0||n==5) col='Violet';
+    let sz = (n>4)?'Big':'Small';
+    db.ref('global_res/' + currentPeriod).set({ num: n, win: col, size: sz });
+    alert("Manual Result Set!");
+}
 
 function loadAdmin() {
     db.ref('requests').on('value', snap => {
-        let h = "<table><tr><th>Info</th><th>Amt</th><th>Action</th></tr>";
+        let h = "<table>";
         snap.forEach(r => {
             let d = r.val();
-            h += `<tr><td>${d.uid}<br><small>${d.utr || d.upi}</small></td><td>${d.amt}</td>
-            <td>
-                <button onclick="approve('${r.key}','${d.uid}',${d.amt},'${d.type}')">✔</button>
-                <button class="reject-btn" onclick="rejectReq('${r.key}')">✖</button>
-            </td></tr>`;
+            h += `<tr><td>${d.uid}</td><td>${d.amt}</td><td><button onclick="approve('${r.key}','${d.uid}',${d.amt})">✔</button><button onclick="reject('${r.key}')">✖</button></td></tr>`;
         });
-        h += "</table>";
-        document.getElementById('adminReqs').innerHTML = h;
+        document.getElementById('adminReqs').innerHTML = h + "</table>";
     });
 }
 
-function approve(k, u, a, t) {
-    if(t == 'Deposit') db.ref('users/'+u+'/balance').transaction(c => (c||0) + parseFloat(a));
-    db.ref('requests/'+k).remove();
-}
+function approve(k, u, a) { db.ref('users/'+u+'/balance').transaction(c => (c||0) + parseFloat(a)); db.ref('requests/'+k).remove(); }
+function reject(k) { db.ref('requests/'+k).remove(); }
 
-function rejectReq(k) { if(confirm("Reject this request?")) db.ref('requests/'+k).remove(); }
-
-function copyInvite() {
-    let link = window.location.href.split('?')[0] + "?ref=" + uid;
-    navigator.clipboard.writeText(link);
-    alert("Referral Link Copied!");
-}
-
-// Number Grid
 let nH="";
 for(let i=0;i<=9;i++){
     let c=(i%2==0)?'red':'green'; if(i==0||i==5)c='violet';
     nH+=`<button class="n-btn" style="color:${c};border-color:${c}" onclick="openBet('${i}')">${i}</button>`;
 }
 document.getElementById('nums').innerHTML=nH;
-
 function openM(id){ document.getElementById(id).style.display="flex"; }
 function closeM(id){ document.getElementById(id).style.display="none"; }
+function copyInvite() { navigator.clipboard.writeText(window.location.href + "?ref=" + uid); alert("Link Copied!"); }
 </script>
 </body>
 </html>
-
