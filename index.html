@@ -1,245 +1,226 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1CLUB PRO - Official</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AX TRADING | Professional Binary Broker</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
+    <style>
+        :root { --bg: #0b1217; --card: #151d24; --up: #00c805; --down: #ff3b30; --text: #ffffff; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        .header { background: var(--card); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c3e50; }
+        .logo { font-weight: 900; color: var(--up); font-size: 22px; cursor: pointer; letter-spacing: 1px; }
+        .balance-area { text-align: right; }
+        .balance-area span { color: var(--up); font-size: 20px; font-weight: bold; }
 
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+        #chartWrapper { width: 100%; height: 50vh; position: relative; background: #080d11; }
+        .sync-info { position: absolute; top: 10px; left: 10px; font-size: 12px; color: #8a949d; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; z-index: 10; }
+        
+        .trade-controls { background: var(--card); height: 40vh; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 20px rgba(0,0,0,0.5); }
+        .input-box { background: #1c2630; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .input-box input { background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; width: 60%; text-align: center; outline: none; }
+        
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { padding: 20px; border-radius: 15px; border: none; font-size: 20px; font-weight: 900; color: white; cursor: pointer; transition: 0.2s; }
+        .btn-up { background: var(--up); box-shadow: 0 5px 0 #008a03; }
+        .btn-down { background: var(--down); box-shadow: 0 5px 0 #b32a22; }
 
-<style>
-:root { --primary:#fb5153; --bg:#f5f6fa; --green:#2ecc71; --red:#e74c3c; --violet:#9b59b6; --gold:#fbc531; --orange:#ffa502; }
-body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:80px;overflow-x:hidden;}
-.header{background:var(--primary);padding:15px;color:#fff;display:flex;justify-content:space-between;font-weight:800}
-.wallet-box{background:#fff;margin:15px;border-radius:20px;padding:20px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-.bal-amt{font-size:30px;font-weight:800;margin:10px 0;}
-.game-area{background:#fff;margin:15px;border-radius:20px;padding:15px}
-.timer-box{display:flex;justify-content:space-between;background:#fff5f5;padding:10px;border-radius:12px;margin-bottom:20px}
-.grid-btn{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
-.btn{border:none;padding:12px;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;}
-.num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
-.n-btn{border:2px solid #ddd;background:#fff;padding:10px;border-radius:50%;font-weight:bold;width:45px;height:45px;display:flex;align-items:center;justify-content:center;margin:auto;cursor:pointer;}
-.bs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:10px}
-th,td{border-bottom:1px solid #eee;padding:10px;text-align:center}
+        .navbar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2c3e50; z-index: 100; }
+        .nav-link { font-size: 10px; color: #8a949d; text-align: center; cursor: pointer; flex: 1; }
+        .nav-link b { display: block; font-size: 18px; margin-bottom: 2px; }
 
-.nav-bar { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 1000; }
-.nav-item { text-align: center; font-size: 11px; color: #666; cursor: pointer; flex: 1; }
-.nav-item b { display: block; font-size: 18px; margin-bottom: 2px; }
-
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:5000;align-items:center;justify-content:center}
-.modal-content{background:#fff;padding:25px;border-radius:20px;width:85%;max-height:80vh;overflow-y:auto;text-align:center;position:relative;}
-
-/* Result Popup Styles */
-#resBox { color: #fff; }
-.res-num-circle { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: 800; margin: 10px auto; border: 4px solid #fff; }
-.res-details { font-size: 18px; font-weight: 600; margin-top: 10px; }
-
-input{width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px; box-sizing: border-box;}
-#qrcode { display: flex; justify-content: center; margin: 15px 0; }
-.upi-copy { background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 13px; font-weight: bold; border: 1px dashed #333; cursor: pointer; margin-bottom: 15px; }
-</style>
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center; }
+        .modal-content { background: var(--card); width: 90%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 20px; border: 1px solid #2c3e50; text-align: center; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin: 10px 0; background: #0b1217; border: 1px solid #2c3e50; border-radius: 8px; color: white; box-sizing: border-box; }
+        
+        .exposure-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; font-size: 10px; display: none; z-index: 10; }
+    </style>
 </head>
-
 <body>
 
 <div class="header">
-    <span>1CLUB PRO</span>
-    <span id="uID">ID: --</span>
-</div>
-
-<div class="wallet-box">
-    <small>Wallet Balance</small>
-    <div class="bal-amt" onclick="checkAdmin()">₹<span id="uBal">0.00</span></div>
-</div>
-
-<div class="game-area">
-    <div class="timer-box">
-        <div><small style="color:red;">Period</small><br><b id="period">Loading...</b></div>
-        <div style="text-align:right;"><small>Time Left</small><br><b id="timer">00:00</b></div>
-    </div>
-    <div class="grid-btn">
-        <button class="btn" style="background:var(--green)" onclick="openBet('Green')">Green</button>
-        <button class="btn" style="background:var(--violet)" onclick="openBet('Violet')">Violet</button>
-        <button class="btn" style="background:var(--red)" onclick="openBet('Red')">Red</button>
-    </div>
-    <div id="nums" class="num-grid"></div>
-    <div class="bs-grid">
-        <button class="btn" style="background:#ffa502" onclick="openBet('Big')">Big</button>
-        <button class="btn" style="background:#2f3542" onclick="openBet('Small')">Small</button>
+    <div class="logo" id="adminTrigger">AX TRADING</div>
+    <div class="balance-area">
+        <small id="walletType">Live Account</small><br>
+        <span id="userBal">₹0.00</span>
     </div>
 </div>
 
-<div class="game-area">
-    <h4>History (Last 20 Results)</h4>
-    <table id="resTable">
-        <thead><tr><th>Period</th><th>Number</th><th>Color</th><th>Size</th></tr></thead>
-        <tbody id="historyBody"></tbody>
-    </table>
+<div id="chartWrapper">
+    <div class="sync-info">Global Price: <span id="timer">00:00</span></div>
+    <div class="exposure-badge" id="exposureBox">
+        UP: ₹<span id="expUp">0</span> | DOWN: ₹<span id="expDown">0</span>
+    </div>
+    <canvas id="mainChart"></canvas>
 </div>
 
-<div class="nav-bar">
-    <div class="nav-item" onclick="openM('depM')"><b>💰</b>Deposit</div>
-    <div class="nav-item" onclick="openM('witM')"><b>🏧</b>Withdraw</div>
-    <div class="nav-item" onclick="copyInvite()"><b>👥</b>Invite</div>
-    <div class="nav-item" onclick="location.reload()"><b>🏠</b>Home</div>
-</div>
-
-<div id="depM" class="modal">
-    <div class="modal-content">
-        <h3>Deposit Money</h3>
-        <input type="number" id="depAmt" placeholder="Enter Amount (Min ₹10)">
-        <button class="btn" style="background:var(--primary); width:100%" onclick="genQR()">Show QR Code</button>
-        <div id="qrcode"></div>
-        <div id="upiIdArea" style="display:none">
-            <p style="font-size:12px; margin-bottom:5px;">UPI ID:</p>
-            <div class="upi-copy" onclick="copyUPI()">poonamlondhe52-1@okhdfcbank</div>
-        </div>
-        <div id="utrArea" style="display:none">
-            <input type="text" id="utrNum" placeholder="Enter 12-digit UTR Number">
-            <button class="btn" style="background:var(--green); width:100%" onclick="subDep()">Submit Deposit</button>
-        </div>
-        <button class="btn" style="background:#333; width:100%; margin-top:10px;" onclick="closeM('depM')">Close</button>
+<div class="trade-controls">
+    <div class="input-box">
+        <small style="color:#8a949d">INVEST (₹)</small>
+        <input type="number" id="betAmt" value="100">
+    </div>
+    <div class="action-btns">
+        <button class="btn btn-up" onclick="placeTrade('UP')">UP ↑</button>
+        <button class="btn btn-down" onclick="placeTrade('DOWN')">DOWN ↓</button>
     </div>
 </div>
 
-<div id="resModal" class="modal">
-    <div id="resBox" class="modal-content">
-        <h2 id="resStatus">--</h2>
-        <div id="resNumCircle" class="res-num-circle">--</div>
-        <div class="res-details">
-            <div id="resSizeText">Size: --</div>
-            <div id="resWinAmt" style="font-size:28px; font-weight:800; margin-top:10px;">₹0.00</div>
-        </div>
-        <button class="btn" style="background:#fff; color:#333; width:100%; margin-top:20px; border:none;" onclick="closeM('resModal')">Close</button>
-    </div>
+<div class="navbar">
+    <div class="nav-link" onclick="openM('profileM')"><b>👤</b>Profile</div>
+    <div class="nav-link" onclick="openM('depM')"><b>💰</b>Deposit</div>
+    <div class="nav-link" onclick="copyInvite()"><b>👥</b>Invite</div>
+    <div class="nav-link" onclick="openM('leaderM')"><b>🏆</b>Rank</div>
+    <div class="nav-link" onclick="openM('tourM')"><b>🎯</b>Tourney</div>
 </div>
 
-<div id="witM" class="modal"><div class="modal-content"><h3>Withdraw</h3><input type="number" id="witAmt" placeholder="Amt"><input type="text" id="witUpi" placeholder="UPI"><button class="btn" style="background:var(--primary);width:100%" onclick="subWit()">Request</button><button class="btn" style="background:#333;width:100%;margin-top:10px;" onclick="closeM('witM')">Close</button></div></div>
-<div id="betM" class="modal"><div class="modal-content"><h3>Bet: <span id="selOpt">--</span></h3><input type="number" id="betAmt" value="10"><button class="btn" style="background:var(--primary);width:100%" onclick="confirmBet()">Confirm</button><button class="btn" style="background:#333;width:100%;margin-top:10px;" onclick="closeM('betM')">Cancel</button></div></div>
+<div id="profileM" class="modal"><div class="modal-content">
+    <h3>Profile Settings</h3>
+    <p style="color:var(--up); font-size: 12px;">ID: <span id="displayUID">--</span></p>
+    <input type="text" id="pName" placeholder="Full Name">
+    <input type="text" id="pPhone" placeholder="Mobile Number">
+    <input type="text" id="pUpi" placeholder="Withdraw UPI ID">
+    <button class="btn btn-up" style="width:100%" onclick="saveProfile()">Save Details</button>
+    <button class="btn" style="width:100%; background:#333; margin-top:10px" onclick="closeM('profileM')">Close</button>
+</div></div>
+
+<div id="depM" class="modal"><div class="modal-content">
+    <h3>Fast Deposit</h3>
+    <p style="font-size: 13px;">UPI: poonamlondhe52-1@okhdfcbank</p>
+    <input type="number" id="dmt" placeholder="Amount">
+    <input type="text" id="dutr" placeholder="12 Digit UTR">
+    <button class="btn btn-up" style="width:100%" onclick="reqDep()">Submit Request</button>
+    <button class="btn" style="width:100%; background:#333; margin-top:10px" onclick="closeM('depM')">Cancel</button>
+</div></div>
 
 <script>
-const firebaseConfig={
-apiKey:"AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
-authDomain:"my-colour-game-670af.firebaseapp.com",
-databaseURL:"https://my-colour-game-670af-default-rtdb.firebaseio.com",
-projectId:"my-colour-game-670af"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+    const firebaseConfig = {
+        apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
+        authDomain: "my-colour-game-670af.firebaseapp.com",
+        databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com",
+        projectId: "my-colour-game-670af"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-let uid=localStorage.getItem('UID')||"U"+Math.floor(1000+Math.random()*9000);
-localStorage.setItem('UID',uid);
+    let uid = localStorage.getItem('AX_UID') || 'AX' + Math.floor(Math.random()*900000);
+    localStorage.setItem('AX_UID', uid);
+    document.getElementById('displayUID').innerText = uid;
 
-let myBet = null;
-let currentPeriod = "";
+    // Chart & Landmark Logic
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    let prices = Array(40).fill(113.500);
+    let activeTrade = null;
 
-// Timer Logic
-function startTimer() {
-    setInterval(() => {
-        let d = new Date();
-        let s = 60 - d.getSeconds();
-        document.getElementById('timer').innerText = "00:" + s.toString().padStart(2,'0');
-        currentPeriod = d.getFullYear().toString() + (d.getMonth()+1).toString().padStart(2,'0') + d.getDate().toString().padStart(2,'0') + (d.getHours()*60 + d.getMinutes());
-        document.getElementById('period').innerText = currentPeriod;
-        if(s === 59) { checkMyResult(currentPeriod - 1); }
-    }, 1000);
-}
-startTimer();
-
-// Perfect Popup Logic
-function checkMyResult(p) {
-    db.ref('global_res/' + p).once('value', s => {
-        if(s.exists() && myBet && myBet.period == p) {
-            let res = s.val();
-            let isWin = (myBet.opt == res.win || myBet.opt == res.num || myBet.opt == res.size);
-            let multiplier = isNaN(myBet.opt) ? 1.9 : 8;
-            let winAmt = isWin ? myBet.amt * multiplier : 0;
-            
-            if(isWin) db.ref('users/'+uid+'/balance').transaction(c => (c||0) + winAmt);
-            
-            // UI Update for Popup
-            let box = document.getElementById('resBox');
-            let numCircle = document.getElementById('resNumCircle');
-            
-            box.style.background = isWin ? "linear-gradient(135deg, #2ecc71, #27ae60)" : "linear-gradient(135deg, #e74c3c, #c0392b)";
-            document.getElementById('resStatus').innerText = isWin ? "WINNING" : "LOSS";
-            numCircle.innerText = res.num;
-            numCircle.style.background = (res.win == 'Red') ? 'var(--red)' : (res.win == 'Green') ? 'var(--green)' : 'var(--violet)';
-            document.getElementById('resSizeText').innerText = "Result: " + res.win + " | " + res.size;
-            document.getElementById('resWinAmt').innerText = isWin ? "+₹" + winAmt.toFixed(2) : "-₹" + myBet.amt.toFixed(2);
-            
-            openM('resModal');
-            myBet = null;
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(40).fill(''),
+            datasets: [{
+                data: prices,
+                borderColor: '#00c805',
+                borderWidth: 3,
+                tension: 0.3,
+                pointRadius: 0,
+                fill: true,
+                backgroundColor: 'rgba(0, 200, 5, 0.05)'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { grid: { color: '#1c2630' }, position: 'right' }, x: { display: false } },
+            plugins: { 
+                legend: { display: false },
+                annotation: { annotations: {} } 
+            }
         }
     });
-}
 
-// Deposit Logic
-function genQR() {
-    let a = document.getElementById('depAmt').value;
-    if(a < 10) return alert("Min ₹10");
-    document.getElementById('qrcode').innerHTML = "";
-    let u = `upi://pay?pa=poonamlondhe52-1@okhdfcbank&pn=1CLUB_PRO&am=${a}&cu=INR`;
-    new QRCode(document.getElementById("qrcode"), { text: u, width: 160, height: 160 });
-    document.getElementById('upiIdArea').style.display = "block";
-    document.getElementById('utrArea').style.display = "block";
-}
+    // Invite Function
+    function copyInvite() {
+        let link = window.location.href.split('?')[0] + "?ref=" + uid;
+        navigator.clipboard.writeText(link);
+        alert("Referral Link Copied!\nShare with friends to earn commission.");
+    }
 
-function copyUPI() {
-    navigator.clipboard.writeText("poonamlondhe52-1@okhdfcbank");
-    alert("UPI ID Copied!");
-}
+    // Landmark Line System
+    function placeTrade(dir) {
+        let amt = parseFloat(document.getElementById('betAmt').value);
+        let currentPrice = prices[prices.length - 1];
+        
+        // Horizontal Line (Landmark) update
+        chart.options.plugins.annotation.annotations.line1 = {
+            type: 'line',
+            yMin: currentPrice,
+            yMax: currentPrice,
+            borderColor: dir === 'UP' ? '#00c805' : '#ff3b30',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: { display: true, content: 'Your Trade', backgroundColor: 'rgba(0,0,0,0.8)' }
+        };
+        
+        activeTrade = { dir: dir, entry: currentPrice, amt: amt };
+        db.ref('exposure/' + dir).transaction(c => (c || 0) + amt);
+        alert(`Trade Set: ${dir} at ${currentPrice.toFixed(3)}`);
+    }
 
-function subDep() {
-    let a = document.getElementById('depAmt').value;
-    let u = document.getElementById('utrNum').value;
-    if(u.length < 10) return alert("Enter valid UTR");
-    db.ref('requests').push({ uid:uid, amt:a, utr:u, type:'Deposit', status:'Pending' });
-    alert("Submitted!");
-    closeM('depM');
-}
+    // Engine & Result
+    function startEngine() {
+        setInterval(() => {
+            let now = new Date();
+            let last = prices[prices.length - 1];
+            let current = last + (Math.random() - 0.5) * 0.008;
+            
+            prices.push(current);
+            prices.shift();
+            chart.data.datasets[0].borderColor = (current >= last) ? '#00c805' : '#ff3b30';
+            chart.update('none');
+            
+            document.getElementById('timer').innerText = "00:" + (60 - now.getSeconds()).toString().padStart(2,'0');
+            if(now.getSeconds() === 0) {
+                if(activeTrade) checkResult(current);
+                chart.options.plugins.annotation.annotations = {}; // Clear line
+            }
+        }, 1000);
+    }
+    startEngine();
 
-// Baki Core Functions (Firebase listeners, modal open/close)
-function openM(id){ document.getElementById(id).style.display="flex"; }
-function closeM(id){ document.getElementById(id).style.display="none"; }
+    function checkResult(final) {
+        let win = (activeTrade.dir === 'UP' && final > activeTrade.entry) || (activeTrade.dir === 'DOWN' && final < activeTrade.entry);
+        if(win) {
+            db.ref('users/'+uid+'/balance').transaction(b => (b||0) + (activeTrade.amt * 1.9));
+            alert("WINNING!");
+        } else {
+            alert("LOSS!");
+        }
+        activeTrade = null;
+    }
 
-db.ref('users/'+uid).on('value',s=>{
-    document.getElementById('uBal').innerText=((s.val()&&s.val().balance)||0).toFixed(2);
-    document.getElementById('uID').innerText="ID: "+uid;
-});
+    // Admin & Profile (Same as requested)
+    function saveProfile() {
+        let d = { name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value, upi: document.getElementById('pUpi').value };
+        db.ref('users/'+uid+'/profile').set(d);
+        alert("Saved!"); closeM('profileM');
+    }
 
-db.ref('global_res').limitToLast(20).on('value', snap => {
-    let h = "";
-    let rows = []; snap.forEach(c => rows.push({p:c.key, ...c.val()}));
-    rows.reverse().forEach(d => {
-        h += `<tr><td>${d.p}</td><td>${d.num}</td><td style="color:var(--${d.win.toLowerCase()})">${d.win}</td><td>${d.size}</td></tr>`;
-    });
-    document.getElementById('historyBody').innerHTML = h;
-});
+    let taps = 0;
+    document.getElementById('adminTrigger').onclick = () => {
+        taps++;
+        if(taps === 5 && prompt("Code:") === "77759636477") {
+            document.getElementById('exposureBox').style.display = 'block';
+            db.ref('exposure').on('value', s => {
+                document.getElementById('expUp').innerText = s.val().UP || 0;
+                document.getElementById('expDown').innerText = s.val().DOWN || 0;
+            });
+        }
+    };
 
-function openBet(o) { document.getElementById('selOpt').innerText = o; openM('betM'); }
-function confirmBet() {
-    let amt = parseFloat(document.getElementById('betAmt').value);
-    db.ref('users/'+uid+'/balance').once('value', s => {
-        let bal = s.val() || 0;
-        if(amt > bal) return alert("Low Bal!");
-        db.ref('users/'+uid+'/balance').set(bal - amt);
-        myBet = { opt: document.getElementById('selOpt').innerText, amt: amt, period: currentPeriod };
-        closeM('betM');
-    });
-}
-
-// Numbers initialization
-let nH="";
-for(let i=0;i<=9;i++){
-    let c=(i%2==0)?'red':'green'; if(i==0||i==5)c='violet';
-    nH+=`<button class="n-btn" style="color:${c};border-color:${c}" onclick="openBet('${i}')">${i}</button>`;
-}
-document.getElementById('nums').innerHTML=nH;
+    function openM(id) { document.getElementById(id).style.display='flex'; }
+    function closeM(id) { document.getElementById(id).style.display='none'; }
+    db.ref('users/'+uid+'/balance').on('value', s => { document.getElementById('userBal').innerText = "₹" + (s.val() || 0).toFixed(2); });
 </script>
 </body>
 </html>
