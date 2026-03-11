@@ -12,9 +12,9 @@
 
 <style>
 :root { --primary:#fb5153; --bg:#f5f6fa; --green:#2ecc71; --red:#e74c3c; --violet:#9b59b6; --gold:#fbc531; --orange:#ffa502; }
-body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:30px;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bottom:80px;}
 .header{background:var(--primary);padding:15px;color:#fff;display:flex;justify-content:space-between;font-weight:800}
-.wallet-box{background:#fff;margin:15px;border-radius:20px;padding:20px;text-align:center}
+.wallet-box{background:#fff;margin:15px;border-radius:20px;padding:20px;text-align:center;box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
 .bal-amt{font-size:30px;font-weight:800;margin:10px 0;cursor:pointer}
 .game-area{background:#fff;margin:15px;border-radius:20px;padding:15px}
 .timer-box{display:flex;justify-content:space-between;background:#fff5f5;padding:10px;border-radius:12px;margin-bottom:20px}
@@ -25,56 +25,85 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding-bott
 .bs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
 table{width:100%;font-size:12px;border-collapse:collapse;margin-top:10px}
 th,td{border-bottom:1px solid #eee;padding:8px;text-align:center}
+
+/* Navigation Bar */
+.nav-bar { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 1000; }
+.nav-item { text-align: center; font-size: 12px; color: #666; cursor: pointer; flex: 1; }
+.nav-item b { display: block; font-size: 18px; margin-bottom: 2px; }
+
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:5000;align-items:center;justify-content:center}
 .modal-content{background:#fff;padding:20px;border-radius:15px;width:90%;max-height:80vh;overflow-y:auto}
+
+/* Popup Styles */
+.result-popup { text-align: center; border-radius: 20px; color: white; padding: 25px; }
+.win-bg { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.loss-bg { background: linear-gradient(135deg, #e74c3c, #c0392b); }
 </style>
 </head>
 
 <body>
 
 <div class="header">
-<span>1CLUB PRO</span>
-<span id="uID">ID: --</span>
+    <span>1CLUB PRO</span>
+    <span id="uID">ID: --</span>
 </div>
 
 <div class="wallet-box">
-<small>Wallet Balance</small>
-<div class="bal-amt" onclick="checkAdmin()">₹<span id="uBal">0.00</span></div>
+    <small>Wallet Balance</small>
+    <div class="bal-amt" onclick="checkAdmin()">₹<span id="uBal">0.00</span></div>
 </div>
 
 <div class="game-area">
-<div class="timer-box">
-<div><small style="color:red;">Period</small><br><b id="period">---</b></div>
-<div style="text-align:right;"><small>Time</small><br><b id="timer">00:60</b></div>
-</div>
-
-<div class="grid-btn">
-<button class="btn" style="background:var(--green)" onclick="betPopup('Green')">Green</button>
-<button class="btn" style="background:var(--violet)" onclick="betPopup('Violet')">Violet</button>
-<button class="btn" style="background:var(--red)" onclick="betPopup('Red')">Red</button>
-</div>
-
-<div id="nums" class="num-grid"></div>
-
-<div class="bs-grid">
-<button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button>
-<button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button>
-</div>
+    <div class="timer-box">
+        <div><small style="color:red;">Period</small><br><b id="period">Loading...</b></div>
+        <div style="text-align:right;"><small>Time Left</small><br><b id="timer">00:00</b></div>
+    </div>
+    <div class="grid-btn">
+        <button class="btn" style="background:var(--green)" onclick="betPopup('Green')">Green</button>
+        <button class="btn" style="background:var(--violet)" onclick="betPopup('Violet')">Violet</button>
+        <button class="btn" style="background:var(--red)" onclick="betPopup('Red')">Red</button>
+    </div>
+    <div id="nums" class="num-grid"></div>
+    <div class="bs-grid">
+        <button class="btn" style="background:#ffa502" onclick="betPopup('Big')">Big</button>
+        <button class="btn" style="background:#2f3542" onclick="betPopup('Small')">Small</button>
+    </div>
 </div>
 
 <div class="game-area">
-<h4>History (Last 20 Results)</h4>
-<table id="resTable">
-</table>
+    <h4>History (Last 20 Results)</h4>
+    <table id="resTable"></table>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item" onclick="alert('Deposit Feature Coming Soon')"><b>💰</b>Deposit</div>
+    <div class="nav-item" onclick="alert('Withdrawal Feature Coming Soon')"><b>🏧</b>Withdraw</div>
+    <div class="nav-item" onclick="alert('Referral Code: ' + uid)"><b>👥</b>Invite</div>
+    <div class="nav-item" onclick="location.reload()"><b>🏠</b>Home</div>
+</div>
+
+<div id="resModal" class="modal">
+    <div id="resBox" class="modal-content result-popup">
+        <h2 id="resStatus">WINNING</h2>
+        <div id="resAmt" style="font-size:30px; font-weight:800;">+₹0.00</div>
+        <br>
+        <button class="btn" style="background:#fff; color:#333; width:100%" onclick="closeM('resModal')">Close</button>
+    </div>
 </div>
 
 <div id="adminM" class="modal">
-<div class="modal-content">
-<h3>ADMIN CONTROL</h3>
-<h4>Requests</h4>
-<div id="adminReqs"></div>
-<button onclick="closeM('adminM')">Close</button>
-</div>
+    <div class="modal-content">
+        <h3>ADMIN CONTROL</h3>
+        <hr>
+        <h4>Next Result (Manual)</h4>
+        <input type="number" id="manualNum" placeholder="0-9 Number" style="width:100%; padding:10px; margin-bottom:10px;">
+        <button class="btn" style="background:var(--green); width:100%" onclick="setManualResult()">Set Next Result</button>
+        <hr>
+        <h4>Requests</h4>
+        <div id="adminReqs">No pending requests</div>
+        <br>
+        <button class="btn" style="background:#333; width:100%" onclick="closeM('adminM')">Close</button>
+    </div>
 </div>
 
 <script>
@@ -91,45 +120,56 @@ const db=firebase.database();
 let uid=localStorage.getItem('UID')||"U"+Math.floor(1000+Math.random()*9000);
 localStorage.setItem('UID',uid);
 
+// Timer & Period Logic
+function startTimer() {
+    setInterval(() => {
+        let now = new Date();
+        let seconds = 60 - now.getSeconds();
+        let periodId = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + (now.getHours() * 60 + now.getMinutes());
+        
+        document.getElementById('timer').innerText = "00:" + seconds.toString().padStart(2, '0');
+        document.getElementById('period').innerText = periodId;
+
+        if (seconds === 1) {
+            // Logic to fetch winner at end of minute
+            console.log("Minute Over - Calculating Winner");
+        }
+    }, 1000);
+}
+startTimer();
+
+// User Data
 db.ref('users/'+uid).on('value',s=>{
-let bal=(s.val()&&s.val().balance)||0;
-document.getElementById('uBal').innerText=bal.toFixed(2);
-document.getElementById('uID').innerText="ID: "+uid;
+    let bal=(s.val()&&s.val().balance)||0;
+    document.getElementById('uBal').innerText=bal.toFixed(2);
+    document.getElementById('uID').innerText="ID: "+uid;
 });
 
-// History Logic: Last 20 Results Fix
-db.ref('global_res').orderByKey().limitToLast(20).on('value', snap => {
+// History Logic
+db.ref('global_res').limitToLast(20).on('value', snap => {
     let h = `<tr><th>Period</th><th>Number</th><th>Colour</th><th>Size</th></tr>`;
-    let dataArr = [];
-    snap.forEach(child => {
-        dataArr.push({ p: child.key, ...child.val() });
-    });
-    dataArr.reverse(); // Latest result at the top
-    dataArr.forEach(d => {
-        let colorStyle = d.win ? d.win.toLowerCase() : 'black';
-        h += `<tr>
-                <td>${d.p}</td>
-                <td>${d.num}</td>
-                <td style="color:var(--${colorStyle})">${d.win}</td>
-                <td>${d.size}</td>
-              </tr>`;
+    let rows = [];
+    snap.forEach(c => { rows.push({ p: c.key, ...c.val() }); });
+    rows.reverse();
+    rows.forEach(d => {
+        h += `<tr><td>${d.p}</td><td>${d.num}</td><td style="color:var(--${d.win.toLowerCase()})">${d.win}</td><td>${d.size}</td></tr>`;
     });
     document.getElementById('resTable').innerHTML = h;
 });
 
-// Winning Logic Function (Low Amount Wins)
-function calculateWinner(bets) {
-    let totalBig = bets.big || 0;
-    let totalSmall = bets.small || 0;
-    
-    // Jis par kam paise wo winner
-    if (totalBig < totalSmall) {
-        return { size: "Big", num: Math.floor(Math.random() * 5) + 5 }; // 5-9 are Big
-    } else {
-        return { size: "Small", num: Math.floor(Math.random() * 5) }; // 0-4 are Small
-    }
+function betPopup(t){ alert("Bet placed on: " + t); }
+function openM(id){ document.getElementById(id).style.display="flex"; }
+function closeM(id){ document.getElementById(id).style.display="none"; }
+function checkAdmin(){ if(prompt("Admin Password")=="77759636477"){ openM('adminM'); } }
+
+function setManualResult() {
+    let num = document.getElementById('manualNum').value;
+    if(num === "") return alert("Pehle number daalo");
+    db.ref('next_manual').set(parseInt(num));
+    alert("Agla result " + num + " set ho gaya hai!");
 }
 
+// Generate Numbers Grid
 let nH="";
 for(let i=0;i<=9;i++){
     let c=(i%2==0)?'red':'green';
@@ -137,38 +177,7 @@ for(let i=0;i<=9;i++){
     nH+=`<button class="n-btn" style="color:${c};border-color:${c}" onclick="betPopup('${i}')">${i}</button>`;
 }
 document.getElementById('nums').innerHTML=nH;
-
-function checkAdmin(){
-    if(prompt("Admin Password")=="77759636477"){
-        openM('adminM');
-        loadAdmin();
-    }
-}
-
-function loadAdmin(){
-    db.ref('requests').on('value',snap=>{
-        let h="<table>";
-        snap.forEach(r=>{
-            let d=r.val();
-            h+=`<tr><td>${d.uid}</td><td>${d.amt}</td><td>${d.type}</td>
-                <td><button onclick="approveReq('${r.key}','${d.uid}',${d.amt},'${d.type}')">Approve</button>
-                <button onclick="rejectReq('${r.key}')">Reject</button></td></tr>`;
-        });
-        h+="</table>";
-        document.getElementById('adminReqs').innerHTML=h;
-    });
-}
-
-function approveReq(k,u,a,t){
-    if(t=="Deposit"){ db.ref('users/'+u+'/balance').transaction(c=>(c||0)+parseFloat(a)); }
-    db.ref('requests/'+k).remove();
-}
-
-function rejectReq(k){ db.ref('requests/'+k).remove(); }
-function betPopup(t){ alert("Bet: "+t); }
-function openM(id){ document.getElementById(id).style.display="flex"; }
-function closeM(id){ document.getElementById(id).style.display="none"; }
-
 </script>
+
 </body>
 </html>
