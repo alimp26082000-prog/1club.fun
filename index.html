@@ -3,224 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AX TRADING | Professional Binary Broker</title>
+    <title>AX TRADING | Professional</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --bg: #0b1217; --card: #151d24; --up: #00c805; --down: #ff3b30; --text: #ffffff; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
+        /* Header */
         .header { background: var(--card); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2c3e50; }
-        .logo { font-weight: 900; color: var(--up); font-size: 22px; cursor: pointer; letter-spacing: 1px; }
-        .balance-area { text-align: right; }
-        .balance-area span { color: var(--up); font-size: 20px; font-weight: bold; }
+        .logo { font-weight: 900; color: var(--up); font-size: 22px; cursor: pointer; }
+        .acc-switcher { background: #1c2630; padding: 5px 15px; border-radius: 8px; cursor: pointer; text-align: right; }
 
-        #chartWrapper { width: 100%; height: 50vh; position: relative; background: #080d11; }
-        .sync-info { position: absolute; top: 10px; left: 10px; font-size: 12px; color: #8a949d; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; z-index: 10; }
+        /* Professional Candle Chart */
+        #chartContainer { width: 100%; height: 50vh; background: #080d11; }
         
+        /* Controls */
         .trade-controls { background: var(--card); height: 40vh; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 20px rgba(0,0,0,0.5); }
-        .input-box { background: #1c2630; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .input-box input { background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; width: 60%; text-align: center; outline: none; }
+        .input-group { background: #1c2630; padding: 10px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .input-group input { background: transparent; border: none; color: white; font-size: 22px; width: 80%; text-align: center; outline: none; }
         
-        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .btn { padding: 20px; border-radius: 15px; border: none; font-size: 20px; font-weight: 900; color: white; cursor: pointer; transition: 0.2s; }
-        .btn-up { background: var(--up); box-shadow: 0 5px 0 #008a03; }
-        .btn-down { background: var(--down); box-shadow: 0 5px 0 #b32a22; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { padding: 18px; border-radius: 15px; border: none; font-size: 18px; font-weight: 900; color: white; cursor: pointer; }
+        .btn-up { background: var(--up); box-shadow: 0 4px 0 #008a03; }
+        .btn-down { background: var(--down); box-shadow: 0 4px 0 #b32a22; }
 
-        .navbar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2c3e50; z-index: 100; }
-        .nav-link { font-size: 10px; color: #8a949d; text-align: center; cursor: pointer; flex: 1; }
-        .nav-link b { display: block; font-size: 18px; margin-bottom: 2px; }
+        /* Notification Pop-up */
+        #notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--down); padding: 15px 25px; border-radius: 10px; display: none; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
+        /* Modals */
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:1000; align-items:center; justify-content:center; }
-        .modal-content { background: var(--card); width: 90%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 20px; border: 1px solid #2c3e50; text-align: center; }
+        .modal-content { background: var(--card); width: 85%; max-height: 85vh; overflow-y: auto; padding: 25px; border-radius: 20px; border: 1px solid #2c3e50; text-align: center; }
+        .qr-img { width: 220px; height: 220px; margin: 15px 0; border: 4px solid white; border-radius: 10px; }
         input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin: 10px 0; background: #0b1217; border: 1px solid #2c3e50; border-radius: 8px; color: white; box-sizing: border-box; }
         
-        .exposure-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 5px; font-size: 10px; display: none; z-index: 10; }
+        .navbar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2c3e50; }
+        .nav-link { font-size: 10px; color: #8a949d; text-align: center; cursor: pointer; }
     </style>
 </head>
 <body>
 
+<div id="notif"></div>
+
 <div class="header">
     <div class="logo" id="adminTrigger">AX TRADING</div>
-    <div class="balance-area">
-        <small id="walletType">Live Account</small><br>
-        <span id="userBal">₹0.00</span>
+    <div class="acc-switcher" onclick="openM('accM')">
+        <small id="walletType">Live Account</small>
+        <div id="userBal" style="color:var(--up); font-weight:bold;">₹0.00</div>
     </div>
 </div>
 
-<div id="chartWrapper">
-    <div class="sync-info">Global Price: <span id="timer">00:00</span></div>
-    <div class="exposure-badge" id="exposureBox">
-        UP: ₹<span id="expUp">0</span> | DOWN: ₹<span id="expDown">0</span>
-    </div>
-    <canvas id="mainChart"></canvas>
-</div>
+<div id="chartContainer"></div>
 
 <div class="trade-controls">
-    <div class="input-box">
-        <small style="color:#8a949d">INVEST (₹)</small>
+    <div class="input-group">
+        <small style="color:#8a949d">INVESTMENT (₹)</small><br>
         <input type="number" id="betAmt" value="100">
     </div>
-    <div class="action-btns">
+    <div class="btn-row">
         <button class="btn btn-up" onclick="placeTrade('UP')">UP ↑</button>
         <button class="btn btn-down" onclick="placeTrade('DOWN')">DOWN ↓</button>
     </div>
 </div>
 
 <div class="navbar">
-    <div class="nav-link" onclick="openM('profileM')"><b>👤</b>Profile</div>
-    <div class="nav-link" onclick="openM('depM')"><b>💰</b>Deposit</div>
-    <div class="nav-link" onclick="copyInvite()"><b>👥</b>Invite</div>
-    <div class="nav-link" onclick="openM('leaderM')"><b>🏆</b>Rank</div>
-    <div class="nav-link" onclick="openM('tourM')"><b>🎯</b>Tourney</div>
+    <div class="nav-link" onclick="openM('profileM')">👤 Profile</div>
+    <div class="nav-link" onclick="openM('depM')">💰 Deposit</div>
+    <div class="nav-link" onclick="copyInvite()">👥 Invite</div>
+    <div class="nav-link" onclick="showRank()">🏆 Rank</div>
+    <div class="nav-link" onclick="showTourney()">🎯 Tourney</div>
 </div>
 
-<div id="profileM" class="modal"><div class="modal-content">
-    <h3>Profile Settings</h3>
-    <p style="color:var(--up); font-size: 12px;">ID: <span id="displayUID">--</span></p>
-    <input type="text" id="pName" placeholder="Full Name">
-    <input type="text" id="pPhone" placeholder="Mobile Number">
-    <input type="text" id="pUpi" placeholder="Withdraw UPI ID">
-    <button class="btn btn-up" style="width:100%" onclick="saveProfile()">Save Details</button>
-    <button class="btn" style="width:100%; background:#333; margin-top:10px" onclick="closeM('profileM')">Close</button>
-</div></div>
-
 <div id="depM" class="modal"><div class="modal-content">
-    <h3>Fast Deposit</h3>
-    <p style="font-size: 13px;">UPI: poonamlondhe52-1@okhdfcbank</p>
-    <input type="number" id="dmt" placeholder="Amount">
-    <input type="text" id="dutr" placeholder="12 Digit UTR">
-    <button class="btn btn-up" style="width:100%" onclick="reqDep()">Submit Request</button>
-    <button class="btn" style="width:100%; background:#333; margin-top:10px" onclick="closeM('depM')">Cancel</button>
+    <h3>Deposit Money</h3>
+    <input type="number" id="depAmount" placeholder="Enter Amount (e.g. 500)" oninput="checkAmt()">
+    <div id="payArea" style="display:none;">
+        <p style="font-size:14px; color:#8a949d">UPI ID: <b style="color:white">alimp26082000-1@okaxis</b></p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=alimp26082000-1@okaxis" class="qr-img">
+        <input type="text" id="utrCode" placeholder="Enter 12-Digit UTR Number">
+        <button class="btn btn-up" style="width:100%" onclick="submitDeposit()">Submit UTR</button>
+    </div>
+    <button class="btn" style="width:100%; background:#333; margin-top:10px" onclick="closeM('depM')">Close</button>
 </div></div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCrt3NnWu9vOeXHyirYEAjOitPXBswLFwU",
-        authDomain: "my-colour-game-670af.firebaseapp.com",
-        databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com",
-        projectId: "my-colour-game-670af"
-    };
+    // Firebase Config
+    const firebaseConfig = { databaseURL: "https://my-colour-game-670af-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    let uid = localStorage.getItem('AX_UID') || 'AX' + Math.floor(Math.random()*900000);
+    let uid = localStorage.getItem('AX_UID') || 'AX'+Math.floor(Math.random()*9999);
     localStorage.setItem('AX_UID', uid);
-    document.getElementById('displayUID').innerText = uid;
 
-    // Chart & Landmark Logic
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    let prices = Array(40).fill(113.500);
-    let activeTrade = null;
+    // Chart System (1-Min Candles, 1-Hour Scroll/Zoom)
+    const chart = LightweightCharts.createChart(document.getElementById('chartContainer'), {
+        layout: { backgroundColor: '#080d11', textColor: '#d1d4dc' },
+        grid: { vertLines: { color: '#1c2630' }, horzLines: { color: '#1c2630' } },
+        timeScale: { timeVisible: true, secondsVisible: false, borderVisible: false },
+        handleScroll: true, handleScale: true // Enables Zoom & Scroll
+    });
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#00c805', downColor: '#ff3b30', borderVisible: false, wickVisible: true
+    });
 
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: Array(40).fill(''),
-            datasets: [{
-                data: prices,
-                borderColor: '#00c805',
-                borderWidth: 3,
-                tension: 0.3,
-                pointRadius: 0,
-                fill: true,
-                backgroundColor: 'rgba(0, 200, 5, 0.05)'
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { y: { grid: { color: '#1c2630' }, position: 'right' }, x: { display: false } },
-            plugins: { 
-                legend: { display: false },
-                annotation: { annotations: {} } 
-            }
+    // Mock History for 1 Hour
+    let candleData = [];
+    let baseTime = Math.floor(Date.now() / 1000) - 3600;
+    for(let i=0; i<60; i++) {
+        candleData.push({ time: baseTime + (i*60), open: 113.4, high: 113.55, low: 113.3, close: 113.45 });
+    }
+    candleSeries.setData(candleData);
+
+    // 1-Minute Update Logic
+    setInterval(() => {
+        let last = candleData[candleData.length - 1];
+        let now = Math.floor(Date.now() / 1000);
+        if(now >= last.time + 60) {
+            let next = { time: last.time + 60, open: last.close, high: last.close+0.05, low: last.close-0.05, close: last.close };
+            candleData.push(next);
+            candleSeries.update(next);
+        }
+    }, 1000);
+
+    // Deposit & Reject Notification
+    function checkAmt() { document.getElementById('payArea').style.display = 'block'; }
+    
+    function submitDeposit() {
+        let amt = document.getElementById('depAmount').value;
+        let utr = document.getElementById('utrCode').value;
+        if(utr.length < 12) return alert("Please enter valid 12-digit UTR");
+        
+        db.ref('admin/depositRequests/'+uid).set({
+            uid, amt, utr, status: 'pending', time: Date.now()
+        });
+        alert("Deposit submitted! Admin is verifying.");
+        closeM('depM');
+    }
+
+    // Listen for Rejections
+    db.ref('admin/depositRequests/'+uid).on('value', s => {
+        let data = s.val();
+        if(data && data.status === 'rejected') {
+            const el = document.getElementById('notif');
+            el.innerHTML = `⚠️ Deposit Rejected: ${data.reason || 'Invalid UTR'}`;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+            db.ref('admin/depositRequests/'+uid).remove(); // Clear after notice
         }
     });
 
-    // Invite Function
-    function copyInvite() {
-        let link = window.location.href.split('?')[0] + "?ref=" + uid;
-        navigator.clipboard.writeText(link);
-        alert("Referral Link Copied!\nShare with friends to earn commission.");
-    }
-
-    // Landmark Line System
-    function placeTrade(dir) {
-        let amt = parseFloat(document.getElementById('betAmt').value);
-        let currentPrice = prices[prices.length - 1];
-        
-        // Horizontal Line (Landmark) update
-        chart.options.plugins.annotation.annotations.line1 = {
-            type: 'line',
-            yMin: currentPrice,
-            yMax: currentPrice,
-            borderColor: dir === 'UP' ? '#00c805' : '#ff3b30',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            label: { display: true, content: 'Your Trade', backgroundColor: 'rgba(0,0,0,0.8)' }
-        };
-        
-        activeTrade = { dir: dir, entry: currentPrice, amt: amt };
-        db.ref('exposure/' + dir).transaction(c => (c || 0) + amt);
-        alert(`Trade Set: ${dir} at ${currentPrice.toFixed(3)}`);
-    }
-
-    // Engine & Result
-    function startEngine() {
-        setInterval(() => {
-            let now = new Date();
-            let last = prices[prices.length - 1];
-            let current = last + (Math.random() - 0.5) * 0.008;
-            
-            prices.push(current);
-            prices.shift();
-            chart.data.datasets[0].borderColor = (current >= last) ? '#00c805' : '#ff3b30';
-            chart.update('none');
-            
-            document.getElementById('timer').innerText = "00:" + (60 - now.getSeconds()).toString().padStart(2,'0');
-            if(now.getSeconds() === 0) {
-                if(activeTrade) checkResult(current);
-                chart.options.plugins.annotation.annotations = {}; // Clear line
-            }
-        }, 1000);
-    }
-    startEngine();
-
-    function checkResult(final) {
-        let win = (activeTrade.dir === 'UP' && final > activeTrade.entry) || (activeTrade.dir === 'DOWN' && final < activeTrade.entry);
-        if(win) {
-            db.ref('users/'+uid+'/balance').transaction(b => (b||0) + (activeTrade.amt * 1.9));
-            alert("WINNING!");
-        } else {
-            alert("LOSS!");
-        }
-        activeTrade = null;
-    }
-
-    // Admin & Profile (Same as requested)
-    function saveProfile() {
-        let d = { name: document.getElementById('pName').value, phone: document.getElementById('pPhone').value, upi: document.getElementById('pUpi').value };
-        db.ref('users/'+uid+'/profile').set(d);
-        alert("Saved!"); closeM('profileM');
-    }
-
-    let taps = 0;
-    document.getElementById('adminTrigger').onclick = () => {
-        taps++;
-        if(taps === 5 && prompt("Code:") === "77759636477") {
-            document.getElementById('exposureBox').style.display = 'block';
-            db.ref('exposure').on('value', s => {
-                document.getElementById('expUp').innerText = s.val().UP || 0;
-                document.getElementById('expDown').innerText = s.val().DOWN || 0;
-            });
-        }
-    };
-
+    // Global Helpers
     function openM(id) { document.getElementById(id).style.display='flex'; }
     function closeM(id) { document.getElementById(id).style.display='none'; }
     db.ref('users/'+uid+'/balance').on('value', s => { document.getElementById('userBal').innerText = "₹" + (s.val() || 0).toFixed(2); });
+    function copyInvite() { navigator.clipboard.writeText(window.location.href+"?ref="+uid); alert("Invite Link Copied!"); }
 </script>
 </body>
 </html>
